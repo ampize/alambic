@@ -1,0 +1,12 @@
+{
+    "name": "WebTales/alambic",
+    "require": {
+        "php": ">=5.4.0",
+        "webonyx/graphql-php": "dev-master"
+    },
+    "require-dev": {
+	},
+    "autoload": {
+        "psr-0": { "Alambic": "library/Alambic/" }
+    }
+}
