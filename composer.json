@@ -1,5 +1,5 @@
 {
-    "name": "WebTales/alambic",
+    "name": "webtales/alambic",
     "require": {
         "php": ">=5.4.0",
         "webonyx/graphql-php": "dev-master"
