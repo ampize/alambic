@@ -23,6 +23,8 @@ class Alambic
 
     protected $alambicConnectors = [ ];
 
+    protected $sharedPipelineContext = [ ];
+
     protected $schema = null;
 
     public function __construct($config)
@@ -35,6 +37,14 @@ class Alambic
             $this->alambicTypeDefs=$config["alambicTypeDefs"];
         }
         $this->initSchema();
+    }
+
+    public function setSharedPipelineContext($newContext){
+        $this->sharedPipelineContext=$newContext;
+    }
+
+    public function getSharedPipelineContext(){
+        return $this->sharedPipelineContext;
     }
 
     public function execute($requestString=null,$variableValues=null,$operationName=null){
@@ -94,7 +104,11 @@ class Alambic
                     $connectorConfig=$type["connector"]["configs"];
                     $connectorRef=$this->alambicConnectors[$type["connector"]["type"]];
                     $queryArray["resolve"]=function ($root, $args) use ($connectorRef,$connectorConfig){
-                        return $connectorRef->resolve($connectorConfig,$args);
+                        return $connectorRef->resolve([
+                            "configs"=>$connectorConfig,
+                            "args"=>$args,
+                            "multivalued"=>false
+                        ]);
                     };
                 }
                 $this->alambicQueryFields[$type["singularEndpoint"]]=$queryArray;
@@ -113,7 +127,11 @@ class Alambic
                     $connectorConfig=$type["connector"]["configs"];
                     $connectorRef=$this->alambicConnectors[$type["connector"]["type"]];
                     $queryArray["resolve"]=function ($root, $args) use ($connectorRef,$connectorConfig){
-                        return $connectorRef->resolve($connectorConfig,$args,true);
+                        return $connectorRef->resolve([
+                            "configs"=>$connectorConfig,
+                            "args"=>$args,
+                            "multivalued"=>true
+                        ]);
                     };
                 }
                 $this->alambicQueryFields[$type["multiEndpoint"]]=$queryArray;
@@ -144,7 +162,11 @@ class Alambic
                         $connectorMethod=$mutationValue["methodName"];
                         $connectorRef=$this->alambicConnectors[$type["connector"]["type"]];
                         $muationArray["resolve"]=function ($root, $args) use ($connectorRef,$connectorConfig,$connectorMethod){
-                            return $connectorRef->execute($connectorConfig,$args,$connectorMethod);
+                            return $connectorRef->execute([
+                                "configs"=>$connectorConfig,
+                                "args"=>$args,
+                                "methodName"=>$connectorMethod
+                            ]);
                         };
                     }
                     $this->alambicMutationFields[$mutationKey]=$muationArray;
@@ -185,7 +207,11 @@ class Alambic
                 foreach($relation as $relKey=>$relValue){
                     $args[$relKey]=$obj[$relValue];
                 }
-                return $connectorRef->resolve($connectorConfig,$args,$multivalued);
+                return $connectorRef->resolve([
+                    "configs"=>$connectorConfig,
+                    "args"=>$args,
+                    "multivalued"=>$multivalued
+                ]);
             };
 
         }
