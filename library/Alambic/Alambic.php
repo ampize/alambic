@@ -5,9 +5,6 @@ namespace Alambic;
 use GraphQL\GraphQL;
 use \Exception;
 use GraphQL\Schema;
-use GraphQL\Type\Definition\EnumType;
-use GraphQL\Type\Definition\InterfaceType;
-use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 
@@ -102,9 +99,9 @@ class Alambic
                 }
                 if(!empty($type["connector"])&&is_array($type["connector"])){
                     $connectorConfig=$type["connector"]["configs"];
-                    $connectorRef=$this->alambicConnectors[$type["connector"]["type"]];
-                    $queryArray["resolve"]=function ($root, $args) use ($connectorRef,$connectorConfig){
-                        return $connectorRef->resolve([
+                    $connectorType=$type["connector"]["type"];
+                    $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig){
+                        return $this->runConnectorResolve($connectorType,[
                             "configs"=>$connectorConfig,
                             "args"=>$args,
                             "multivalued"=>false
@@ -125,9 +122,9 @@ class Alambic
                 }
                 if(!empty($type["connector"])&&is_array($type["connector"])){
                     $connectorConfig=$type["connector"]["configs"];
-                    $connectorRef=$this->alambicConnectors[$type["connector"]["type"]];
-                    $queryArray["resolve"]=function ($root, $args) use ($connectorRef,$connectorConfig){
-                        return $connectorRef->resolve([
+                    $connectorType=$type["connector"]["type"];
+                    $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig){
+                        return $this->runConnectorResolve($connectorType,[
                             "configs"=>$connectorConfig,
                             "args"=>$args,
                             "multivalued"=>true
@@ -160,9 +157,9 @@ class Alambic
                     if(!empty($type["connector"])&&is_array($type["connector"])){
                         $connectorConfig=$type["connector"]["configs"];
                         $connectorMethod=$mutationValue["methodName"];
-                        $connectorRef=$this->alambicConnectors[$type["connector"]["type"]];
-                        $muationArray["resolve"]=function ($root, $args) use ($connectorRef,$connectorConfig,$connectorMethod){
-                            return $connectorRef->execute([
+                        $connectorType=$type["connector"]["type"];
+                        $muationArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig,$connectorMethod){
+                            return $this->runConnectorExecute($connectorType,[
                                 "configs"=>$connectorConfig,
                                 "args"=>$args,
                                 "methodName"=>$connectorMethod
@@ -200,14 +197,14 @@ class Alambic
         }
         if (isset($this->alambicTypeDefs[$fieldValue["type"]],$this->alambicTypeDefs[$fieldValue["type"]]["connector"])){
             $connectorConfig=$this->alambicTypeDefs[$fieldValue["type"]]["connector"]["configs"];
-            $connectorRef=$this->alambicConnectors[$this->alambicTypeDefs[$fieldValue["type"]]["connector"]["type"]];
+            $connectorType=$this->alambicTypeDefs[$fieldValue["type"]]["connector"]["type"];
             $multivalued=isset($fieldValue["multivalued"])&&$fieldValue["multivalued"];
             $relation=isset($fieldValue["relation"])&&is_array($fieldValue["relation"]) ? $fieldValue["relation"] : [];
-            $fieldResult["resolve"]=function ($obj,$args=[]) use ($connectorRef,$connectorConfig,$multivalued,$relation){
+            $fieldResult["resolve"]=function ($obj,$args=[]) use ($connectorType,$connectorConfig,$multivalued,$relation){
                 foreach($relation as $relKey=>$relValue){
                     $args[$relKey]=$obj[$relValue];
                 }
-                return $connectorRef->resolve([
+                return $this->runConnectorResolve($connectorType,[
                     "configs"=>$connectorConfig,
                     "args"=>$args,
                     "multivalued"=>$multivalued
@@ -234,5 +231,19 @@ class Alambic
         ]);
 
         $this->schema = new Schema($queryType,$mutationType);
+    }
+    
+    protected function runConnectorResolve($connectorType,$payload){
+        if(!isset($this->alambicConnectors[$connectorType],$this->alambicConnectors[$connectorType]["obj"])){
+            throw new Exception("Undefined connector : ".$connectorType);
+        }
+        return $this->alambicConnectors[$connectorType]["obj"]->resolve($payload);
+    }
+
+    protected function runConnectorExecute($connectorType,$payload){
+        if(!isset($this->alambicConnectors[$connectorType],$this->alambicConnectors[$connectorType]["obj"])){
+            throw new Exception("Undefined connector : ".$connectorType);
+        }
+        return $this->alambicConnectors[$connectorType]["obj"]->execute($payload);
     }
 }   
