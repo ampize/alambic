@@ -240,33 +240,39 @@ class Alambic
         $this->schema = new Schema($queryType,$mutationType);
     }
     
-    protected function runConnectorResolve($connectorType,$payload){
+    protected function runConnectorResolve($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null){
         $payload["isResolve"]=true;
         $payload["isMutation"]=false;
-        if(!isset($this->alambicConnectors[$connectorType])){
-            throw new Exception("Undefined connector : ".$connectorType);
-        }
-        $pipeLineKey=$connectorType;
-        if(!$this->pipelines[$pipeLineKey]){
-            $pipelineBuilder = (new PipelineBuilder)->add(new $this->alambicConnectors[$connectorType]["connectorClass"]);
-            $this->pipelines[$pipeLineKey]=$pipelineBuilder->build();
-        }
-        return $this->pipelines[$pipeLineKey]->process($payload);
+        return $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
     }
 
-    protected function runConnectorExecute($connectorType,$payload){
+    protected function runConnectorExecute($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null){
         $payload["isResolve"]=false;
         $payload["isMutation"]=true;
+        return $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
+    }
+
+    protected function runConnectorPipeline($connectorType,$payload,$customPrePipeline = null,$customPostPipeline = null){
         if(!isset($this->alambicConnectors[$connectorType])){
             throw new Exception("Undefined connector : ".$connectorType);
         }
-        $pipeLineKey=$connectorType;
+        $prePipeline=!empty($this->alambicConnectors[$connectorType]["prePipeline"])&&is_array($this->alambicConnectors[$connectorType]["prePipeline"]) ? $this->alambicConnectors[$connectorType]["prePipeline"] : [];
+        $postPipeline=!empty($this->alambicConnectors[$connectorType]["postPipeline"])&&is_array($this->alambicConnectors[$connectorType]["postPipeline"]) ? $this->alambicConnectors[$connectorType]["postPipeline"] : [];
+        if ($customPrePipeline&&is_array($customPrePipeline)){
+            $prePipeline=$customPrePipeline;
+        }
+        if ($customPostPipeline&&is_array($customPostPipeline)){
+            $postPipeline=$customPostPipeline;
+        }
+        $finalPipeline=array_merge($prePipeline,[$this->alambicConnectors[$connectorType]["connectorClass"]],$postPipeline);
+        $pipeLineKey=implode("-",$finalPipeline);
         if(!$this->pipelines[$pipeLineKey]){
-            $pipelineBuilder = (new PipelineBuilder)->add(new $this->alambicConnectors[$connectorType]["connectorClass"]);
+            $pipelineBuilder = (new PipelineBuilder);
+            foreach($finalPipeline as $stage){
+                $pipelineBuilder->add(new $stage);
+            }
             $this->pipelines[$pipeLineKey]=$pipelineBuilder->build();
         }
         return $this->pipelines[$pipeLineKey]->process($payload);
-
-
     }
 }   
