@@ -87,51 +87,55 @@ class Alambic
         }
         $this->alambicTypes[$typeName]=new ObjectType($typeArray);
         if(isset($type["expose"])&&$type["expose"]){
-            if (!empty($type["singularEndpoint"])){
+            if (!empty($type["singleEndpoint"])&&is_array($type["singleEndpoint"])&&!empty($type["singleEndpoint"]["name"])){
                 $queryArray=[
                     "type"=>$this->alambicTypes[$typeName],
                 ];
-                if(!empty($type["singleQueryArgs"])&&is_array($type["singleQueryArgs"])){
+                if(!empty($type["singleEndpoint"]["args"])&&is_array($type["singleEndpoint"]["args"])){
                     $queryArray["args"]=[ ];
-                    foreach($type["singleQueryArgs"] as $sargFieldKey=>$sargFieldValue){
+                    foreach($type["singleEndpoint"]["args"] as $sargFieldKey=>$sargFieldValue){
                         $queryArray["args"][$sargFieldKey]=$this->buildField($sargFieldKey,$sargFieldValue);
                     }
                 }
                 if(!empty($type["connector"])&&is_array($type["connector"])){
                     $connectorConfig=$type["connector"]["configs"];
                     $connectorType=$type["connector"]["type"];
-                    $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig){
+                    $connectorMethod=!empty($type["singleEndpoint"]["methodName"]) ? $type["singleEndpoint"]["methodName"] : null;
+                    $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig,$connectorMethod){
                         return $this->runConnectorResolve($connectorType,[
                             "configs"=>$connectorConfig,
                             "args"=>$args,
-                            "multivalued"=>false
+                            "multivalued"=>false,
+                            "methodName"=>$connectorMethod
                         ]);
                     };
                 }
-                $this->alambicQueryFields[$type["singularEndpoint"]]=$queryArray;
+                $this->alambicQueryFields[$type["singleEndpoint"]["name"]]=$queryArray;
             }
-            if (!empty($type["multiEndpoint"])){
+            if (!empty($type["multiEndpoint"])&&is_array($type["multiEndpoint"])&&!empty($type["multiEndpoint"]["name"])){
                 $queryArray=[
                     "type"=>Type::listOf($this->alambicTypes[$typeName]),
                 ];
-                if(!empty($type["multiQueryArgs"])&&is_array($type["multiQueryArgs"])){
+                if(!empty($type["multiEndpoint"]["args"])&&is_array($type["multiEndpoint"]["args"])){
                     $queryArray["args"]=[ ];
-                    foreach($type["multiQueryArgs"] as $margFieldKey=>$margFieldValue){
+                    foreach($type["multiEndpoint"]["args"] as $margFieldKey=>$margFieldValue){
                         $queryArray["args"][$margFieldKey]=$this->buildField($margFieldKey,$margFieldValue);
                     }
                 }
                 if(!empty($type["connector"])&&is_array($type["connector"])){
                     $connectorConfig=$type["connector"]["configs"];
                     $connectorType=$type["connector"]["type"];
-                    $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig){
+                    $connectorMethod=!empty($type["multiEndpoint"]["methodName"]) ? $type["multiEndpoint"]["methodName"] : null;
+                    $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig,$connectorMethod){
                         return $this->runConnectorResolve($connectorType,[
                             "configs"=>$connectorConfig,
                             "args"=>$args,
-                            "multivalued"=>true
+                            "multivalued"=>true,
+                            "methodName"=>$connectorMethod
                         ]);
                     };
                 }
-                $this->alambicQueryFields[$type["multiEndpoint"]]=$queryArray;
+                $this->alambicQueryFields[$type["multiEndpoint"]["name"]]=$queryArray;
             }
             if (!empty($type["mutations"])&&is_array($type["mutations"])){
 
