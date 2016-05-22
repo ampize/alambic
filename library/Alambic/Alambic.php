@@ -7,6 +7,7 @@ use \Exception;
 use GraphQL\Schema;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
+use League\Pipeline\PipelineBuilder;
 
 class Alambic
 {
@@ -21,6 +22,8 @@ class Alambic
     protected $alambicConnectors = [ ];
 
     protected $sharedPipelineContext = [ ];
+
+    protected $pipelines = [ ];
 
     protected $schema = null;
 
@@ -238,16 +241,32 @@ class Alambic
     }
     
     protected function runConnectorResolve($connectorType,$payload){
-        if(!isset($this->alambicConnectors[$connectorType],$this->alambicConnectors[$connectorType]["obj"])){
+        $payload["isResolve"]=true;
+        $payload["isMutation"]=false;
+        if(!isset($this->alambicConnectors[$connectorType])){
             throw new Exception("Undefined connector : ".$connectorType);
         }
-        return $this->alambicConnectors[$connectorType]["obj"]->resolve($payload);
+        $pipeLineKey=$connectorType;
+        if(!$this->pipelines[$pipeLineKey]){
+            $pipelineBuilder = (new PipelineBuilder)->add(new $this->alambicConnectors[$connectorType]["connectorClass"]);
+            $this->pipelines[$pipeLineKey]=$pipelineBuilder->build();
+        }
+        return $this->pipelines[$pipeLineKey]->process($payload);
     }
 
     protected function runConnectorExecute($connectorType,$payload){
-        if(!isset($this->alambicConnectors[$connectorType],$this->alambicConnectors[$connectorType]["obj"])){
+        $payload["isResolve"]=false;
+        $payload["isMutation"]=true;
+        if(!isset($this->alambicConnectors[$connectorType])){
             throw new Exception("Undefined connector : ".$connectorType);
         }
-        return $this->alambicConnectors[$connectorType]["obj"]->execute($payload);
+        $pipeLineKey=$connectorType;
+        if(!$this->pipelines[$pipeLineKey]){
+            $pipelineBuilder = (new PipelineBuilder)->add(new $this->alambicConnectors[$connectorType]["connectorClass"]);
+            $this->pipelines[$pipeLineKey]=$pipelineBuilder->build();
+        }
+        return $this->pipelines[$pipeLineKey]->process($payload);
+
+
     }
 }   
