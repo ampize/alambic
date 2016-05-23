@@ -85,6 +85,9 @@ class Alambic
             "name"=>$type["name"],
             "fields"=>[]
         ];
+        if(!empty($type["description"])){
+            $typeArray["description"]=$type["description"];
+        }
         foreach($type["fields"] as $fieldKey=>$fieldValue){
             $typeArray["fields"][$fieldKey]=$this->buildField($fieldKey,$fieldValue);
         }
@@ -208,6 +211,9 @@ class Alambic
         $fieldResult=[
             "type"=>$baseTypeResult
         ];
+        if(!empty($fieldValue["description"])){
+            $fieldResult["description"]=$fieldValue["description"];
+        }
         if(!empty($fieldValue["args"])&&is_array($fieldValue["args"])){
             $fieldResult["args"]=[ ];
             foreach($fieldValue["args"] as $eargFieldKey=>$eargFieldValue){
