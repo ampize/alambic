@@ -107,12 +107,102 @@
 
                     <div id="content" class="col-sm-9">
                         <div class="page-header">
-    <h2>Setup
+    <h1>Setup
         
-    </h2>
+    </h1>
 </div>
 
+<h2 id="installation">Installation</h2>
 
+<p>The recommended way to install this package, is through composer.</p>
+
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code>composer require webtales/alambic
+</code></pre>
+</div>
+
+<h2 id="usage">Usage</h2>
+
+<p>Once configured, an alambic instance can be used to execute GraphQL Requests.</p>
+
+<div class="language-php highlighter-rouge"><pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">use</span> <span class="nx">Alambic\Alambic</span><span class="p">;</span>
+
+<span class="nv">$alambic</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Alambic</span><span class="p">(</span><span class="nv">$alambicConfig</span><span class="p">);</span>
+<span class="nv">$result</span> <span class="o">=</span> <span class="nv">$alambic</span><span class="o">-&gt;</span><span class="na">execute</span><span class="p">(</span><span class="nv">$requestString</span><span class="p">,</span><span class="nv">$variableValues</span><span class="p">,</span><span class="nv">$operationName</span><span class="p">);</span>
+</code></pre>
+</div>
+
+<p>A basic configuration array would look something like this :</p>
+
+<pre><code class="language-PHP">$alambicConfig=[
+            "alambicConnectors"=&gt;[
+                "WhateverDB"=&gt;array(
+                    "connectorClass"=&gt;"MyNamespace\\Connector\\WhateverDB",
+                    "prePipeline"=&gt;array(),
+                    "postPipeline"=&gt;array(),
+                )
+            ],
+            "alambicTypeDefs"=&gt;[
+                "MyModel"=&gt;[
+                    "name"=&gt;"MyModel",
+                    "description"=&gt;"Description for my data model",
+                    "fields"=&gt;[
+                        "id"=&gt;[
+                            "type"=&gt;"String",
+                            "required"=&gt;true,
+                            "description"=&gt;"Description for id field"
+                        ],
+                        "name"=&gt;[
+                            "type"=&gt;"String",
+                            "description"=&gt;"Description for name field"
+                        ]
+                    ],
+                    "expose"=&gt;true,
+                    "singleEndpoint"=&gt;[
+                        "name"=&gt;"mymodel",
+                        "args"=&gt;[
+                            "id"=&gt;[
+                                "type"=&gt;"String",
+                                "required"=&gt;true,
+                                "description"=&gt;"Description for id query param"
+                            ]
+                        ]
+                    ],
+                    "connector"=&gt;[
+                        "type"=&gt;"WhateverDB",
+                        "configs"=&gt;[
+                            "table"=&gt;"some_table"
+                        ]
+                    ]
+                ]
+            ]
+        ];
+</code></pre>
+
+<p>Exposing this over a HTTP endpoint that accepts GraphQL queries can be as simple as the following naive example:</p>
+
+<div class="language-php highlighter-rouge"><pre class="highlight"><code><span class="cp">&lt;?php</span>
+<span class="k">use</span> <span class="nx">Alambic\Alambic</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">\Exception</span><span class="p">;</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'CONTENT_TYPE'</span><span class="p">])</span> <span class="o">&amp;&amp;</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'CONTENT_TYPE'</span><span class="p">]</span> <span class="o">===</span> <span class="s1">'application/json'</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$rawBody</span> <span class="o">=</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'php://input'</span><span class="p">);</span>
+    <span class="nv">$data</span> <span class="o">=</span> <span class="nb">json_decode</span><span class="p">(</span><span class="nv">$rawBody</span> <span class="o">?:</span> <span class="s1">''</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$_POST</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nv">$requestString</span> <span class="o">=</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="s1">'query'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">'query'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
+<span class="nv">$operationName</span> <span class="o">=</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="s1">'operation'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">'operation'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
+<span class="nv">$variableValues</span> <span class="o">=</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="s1">'variables'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">'variables'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
+
+<span class="nv">$alambic</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Alambic</span><span class="p">(</span><span class="nv">$alambicConfig</span><span class="p">);</span>
+<span class="nv">$result</span> <span class="o">=</span> <span class="nv">$alambic</span><span class="o">-&gt;</span><span class="na">execute</span><span class="p">(</span><span class="nv">$requestString</span><span class="p">,</span><span class="nv">$variableValues</span><span class="p">,</span><span class="nv">$operationName</span><span class="p">);</span>
+
+<span class="nb">header</span><span class="p">(</span><span class="s1">'Content-Type: application/json'</span><span class="p">);</span>
+<span class="k">echo</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$result</span><span class="p">);</span>
+</code></pre>
+</div>
 
 
                     </div>
