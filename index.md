@@ -3,9 +3,7 @@ layout: default
 title: "Alambic"
 ---
 
-# Alambic
-
-### The PHP data stack
+# Dead easy data access
 
 Based on Facebook [GraphQL](http://graphql.org/GraphQL), the Alambic project aims to provide to PHP developers a powerful data API with:
 
@@ -16,7 +14,7 @@ Based on Facebook [GraphQL](http://graphql.org/GraphQL), the Alambic project aim
 
 Alambic is framework agnostic, so it will play nice with your preferred PHP framework/library: Laravel, Symfony, Zend Framework...
 
-### Core Concepts
+## Core Concepts
 
 SQL, NoSQL, hierarchical, search indexes, besides pro's and con's of each db technology, the web is evolving as a composite aggregation of various data sources. Each web page or mobile application needs to request a growing number of heterogeneous data sources, leading to multiple ad-hoc endpoints or custom libraries implementations.
 
@@ -25,6 +23,8 @@ Client-driven queries eliminates the need to handle separately each data source,
 The core system relies on a declarative and strong-types data model, which describes the types of objects that can be returned and the relations between them.
 
 Here is a type object description:
+
+### Type example
 
 ```json
 {

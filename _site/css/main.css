@@ -1,6 +1,7 @@
 body {
     font-weight: 400;
     text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
+    font-size: 16px;
 }
 
 pre, code, pre code {
@@ -59,6 +60,9 @@ code {
 #navigation .nav-header {
     padding-left: 0;
     padding-right: 0;
+    margin: 20px 10px 10px 0;
+    text-transform: uppercase;
+    color: #525252;
 }
 
 body.rtl {
@@ -67,8 +71,13 @@ body.rtl {
 
 body.rtl #header .brand {
 	float: right;
-    margin-left: 5px;
+  margin-left: 5px;
 }
+
+brand.a {
+  color: #ff4143;
+}
+
 body.rtl .row-fluid [class*="span"] {
 	float: right !important;
 	margin-left: 0;
@@ -91,4 +100,39 @@ table {
 td, th {
   padding: .25rem .5rem;
   border: 1px solid #e5e5e5;
+}
+
+h1, h2, h3, h4 {
+  -webkit-font-smoothing: antialiased;
+}
+
+h1  {
+  font-family: "sans-serif";
+  color: #ff4143;
+  font-size: 48px;
+  font-weight: 200;
+}
+
+h2 {
+  font-family: "sans-serif";
+  color: #ff4143;
+  font-size: 30px;
+  font-weight: 400;
+  margin-top: 45px;
+}
+
+h3 {
+  font-family: "sans-serif";
+  color: #525252;
+  font-size: 24px;
+  font-weight: 400;
+  margin-top: 40px;
+}
+
+p {
+	line-height: 1.7;
+	margin: 20px 0 20px;
+	strong {
+		-webkit-font-smoothing: antialiased;
+	}
 }
