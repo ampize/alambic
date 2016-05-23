@@ -161,12 +161,12 @@ class Alambic
                     if(isset($mutationValue["required"])&&$mutationValue["required"]){
                         $mutationResultType=Type::nonNull($mutationResultType);
                     }
-                    $muationArray=[
+                    $mutationArray=[
                         "type"=>$mutationResultType,
                         "args"=>[]
                     ];
                     foreach($mutationValue["args"] as $mutargFieldKey=>$mutargFieldValue){
-                        $muationArray["args"][$mutargFieldKey]=$this->buildField($mutargFieldKey,$mutargFieldValue);
+                        $mutationArray["args"][$mutargFieldKey]=$this->buildField($mutargFieldKey,$mutargFieldValue);
                     }
 
                     if(!empty($type["connector"])&&is_array($type["connector"])){
@@ -176,7 +176,7 @@ class Alambic
                         $customPrePipeline=!empty($mutationValue["prePipeline"]) ? $mutationValue["prePipeline"] : null;
                         $customPostPipeline=!empty($mutationValue["postPipeline"]) ? $mutationValue["postPipeline"] : null;
                         $pipelineParams=!empty($mutationValue["pipelineParams"]) ? $mutationValue["pipelineParams"] : null;
-                        $muationArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig,$connectorMethod,$customPrePipeline,$customPostPipeline,$pipelineParams){
+                        $mutationArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig,$connectorMethod,$customPrePipeline,$customPostPipeline,$pipelineParams){
                             return $this->runConnectorExecute($connectorType,[
                                 "configs"=>$connectorConfig,
                                 "args"=>$args,
@@ -185,7 +185,7 @@ class Alambic
                             ],$customPrePipeline,$customPostPipeline);
                         };
                     }
-                    $this->alambicMutationFields[$mutationKey]=$muationArray;
+                    $this->alambicMutationFields[$mutationKey]=$mutationArray;
 
                 }
             }
