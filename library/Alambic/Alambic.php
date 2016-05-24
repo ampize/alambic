@@ -283,6 +283,7 @@ class Alambic
         if(empty($payload["pipelineParams"])){
             $payload["pipelineParams"]=[];
         }
+        $payload["connectorBaseConfig"]=$this->alambicConnectors[$connectorType];
         $payload["pipelineParams"]=array_merge($payload["pipelineParams"],$this->sharedPipelineContext);
         $prePipeline=!empty($this->alambicConnectors[$connectorType]["prePipeline"])&&is_array($this->alambicConnectors[$connectorType]["prePipeline"]) ? $this->alambicConnectors[$connectorType]["prePipeline"] : [];
         $postPipeline=!empty($this->alambicConnectors[$connectorType]["postPipeline"])&&is_array($this->alambicConnectors[$connectorType]["postPipeline"]) ? $this->alambicConnectors[$connectorType]["postPipeline"] : [];
