@@ -5,7 +5,7 @@ title: "Alambic"
 
 # Dead easy data access
 
-Based on Facebook [GraphQL](http://graphql.org/GraphQL), the Alambic project aims to provide to PHP developers a powerful data API with:
+Based on Facebook [GraphQL](http://graphql.org), the Alambic project aims to provide to PHP developers a powerful data API with:
 
  * elegant, hierarchical, declarative [data models](http://webtales.github.io/alambic/models/introduction)
  * simple and unified query language, handling complex [relations](http://webtales.github.io/alambic/models/relations)
