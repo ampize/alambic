@@ -21,7 +21,7 @@ class Json
         }
         $tempJson = file_get_contents($filePath);
         $jsonArray=json_decode($tempJson,true);
-        return $payload["isMutation"] ? $this->execute($payload,$jsonArray) : $this->resolve($payload,$jsonArray);
+        return $payload["isMutation"] ? $this->execute($payload,$jsonArray,$filePath) : $this->resolve($payload,$jsonArray);
 
     }
 
@@ -45,9 +45,39 @@ class Json
         return $result;
     }
 
-    public function execute($payload=[],$jsonArray){
-        //WIP
-        return [];
+    public function execute($payload=[],$jsonArray,$filePath){
+        $args=isset($payload["args"]) ? $payload["args"] : [];
+        $methodName=isset($payload["methodName"]) ? $payload["methodName"] : null;
+        if(empty($methodName)){
+            throw new Exception('Json connector requires a valid methodName for write ops');
+        }
+        if(empty($args["id"])){
+            throw new Exception('Json connector id for write ops');
+        }
+        $result=[];
+        if($methodName=="create"){
+            $jsonArray[]=$args;
+            $result=$args;
+        } else {
+            $recordFound = false;
+            foreach ($jsonArray as $recordKey => $record) {
+                if (!$recordFound && isset($record["id"]) && $record["id"] == $args["id"]) {
+                    if ($methodName == "update") {
+                        foreach ($args as $argKey => $argValue) {
+                            $record[$argKey] = $argValue;
+                        }
+                        $result = $record;
+                        $jsonArray[$recordKey] = $record;
+
+                    } elseif ($methodName == "delete") {
+                        unset($jsonArray[$recordKey]);
+                    }
+                    $recordFound = true;
+                }
+            }
+        }
+        file_put_contents($filePath,json_encode($jsonArray));
+        return $result;
     }
 
 }
