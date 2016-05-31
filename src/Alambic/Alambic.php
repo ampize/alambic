@@ -263,7 +263,7 @@ class Alambic
 
         $this->schema = new Schema($queryType,$mutationType);
     }
-    
+
     protected function runConnectorResolve($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null){
         $payload["isResolve"]=true;
         $payload["isMutation"]=false;
@@ -295,7 +295,7 @@ class Alambic
         }
         $finalPipeline=array_merge($prePipeline,[$this->alambicConnectors[$connectorType]["connectorClass"]],$postPipeline);
         $pipeLineKey=implode("-",$finalPipeline);
-        if(!$this->pipelines[$pipeLineKey]){
+        if(!isset($pipeLineKey,$this->pipelines)){
             $pipelineBuilder = (new PipelineBuilder);
             foreach($finalPipeline as $stage){
                 $pipelineBuilder->add(new $stage);
@@ -304,4 +304,4 @@ class Alambic
         }
         return $this->pipelines[$pipeLineKey]->process($payload);
     }
-}   
+}
