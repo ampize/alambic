@@ -6,6 +6,6 @@
         "league/pipeline":"0.2.2"
     },
     "autoload": {
-        "psr-0": { "Alambic": "library/Alambic/" }
+        "psr-0": { "Alambic": "src/" }
     }
 }
