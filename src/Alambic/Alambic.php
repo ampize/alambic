@@ -30,11 +30,15 @@ class Alambic
     public function __construct($config)
     {
         $this->initAlambicBaseTypes();
-        if(!empty($config["alambicConnectors"])){
-            $this->alambicConnectors=$config["alambicConnectors"];
-        }
-        if(!empty($config["alambicTypeDefs"])){
-            $this->alambicTypeDefs=$config["alambicTypeDefs"];
+        if (is_string($config)&&is_dir($config)) {
+            $this->loadConfigFromFiles($config);
+        } else {
+            if(!empty($config["alambicConnectors"])){
+                $this->alambicConnectors=$config["alambicConnectors"];
+            }
+            if(!empty($config["alambicTypeDefs"])){
+                $this->alambicTypeDefs=$config["alambicTypeDefs"];
+            }
         }
         $this->initSchema();
     }
@@ -67,6 +71,21 @@ class Alambic
         return $result;
     }
 
+    protected function loadConfigFromFiles($path) {
+        $connectorFiles = glob($path.'/connectors/*.json');
+        foreach($connectorFiles as $filePath) {
+            $tempJson = file_get_contents($filePath);
+            $jsonArray=json_decode($tempJson,true);
+            $this->alambicConnectors = array_merge($this->alambicConnectors, $jsonArray);
+        }
+        $modelFiles = glob($path.'/models/*.json');
+        foreach($modelFiles as $filePath) {
+            $tempJson = file_get_contents($filePath);
+            $jsonArray=json_decode($tempJson,true);
+            $this->alambicTypeDefs = array_merge($this->alambicTypeDefs, $jsonArray);
+        }
+    }
+
     protected function initAlambicBaseTypes(){
         $this->alambicTypes=[
             "String"=>Type::string(),
@@ -75,6 +94,10 @@ class Alambic
             "Boolean"=>Type::boolean(),
             "ID"=>Type::id(),
         ];
+    }
+
+    protected function loadConfigFromFiles() {
+
     }
 
     protected function loadAlambicType($typeName,$type){
