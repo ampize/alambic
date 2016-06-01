@@ -96,10 +96,6 @@ class Alambic
         ];
     }
 
-    protected function loadConfigFromFiles() {
-
-    }
-
     protected function loadAlambicType($typeName,$type){
         if (isset($this->alambicTypes[$typeName])){
             return;
