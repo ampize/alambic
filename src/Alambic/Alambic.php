@@ -314,7 +314,7 @@ class Alambic
         }
         $finalPipeline=array_merge($prePipeline,[$this->alambicConnectors[$connectorType]["connectorClass"]],$postPipeline);
         $pipeLineKey=implode("-",$finalPipeline);
-        if(!isset($pipeLineKey,$this->pipelines)){
+        if(!array_key_exists($pipeLineKey,$this->pipelines)){
             $pipelineBuilder = (new PipelineBuilder);
             foreach($finalPipeline as $stage){
                 $pipelineBuilder->add(new $stage);
