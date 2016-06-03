@@ -9,24 +9,80 @@ use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use League\Pipeline\PipelineBuilder;
 
+/**
+ * Main Alambic class
+ *
+ * Handle initialization, configuration and request processing
+ *
+ * @author Alexandru-Dobre
+ *
+ */
+
 class Alambic
 {
+    /**
+     * Alambic type definitions
+     *
+     * @var array[]
+     */
     protected $alambicTypeDefs = [ ];
 
+    /**
+     * Alambic types
+     *
+     * @var ObjectType[]
+     */
     protected $alambicTypes = [ ];
 
+    /**
+     * Alambic query fields
+     *
+     * @var array[]
+     */
     protected $alambicQueryFields = [ ];
 
+    /**
+     * Alambic mutation fields
+     *
+     * @var array[]
+     */
     protected $alambicMutationFields = [ ];
 
+    /**
+     * Alambic connector  config
+     *
+     * @var array
+     */
     protected $alambicConnectors = [ ];
 
+    /**
+     * Shared pipeline context
+     *
+     * Is merged into pipeline params for all operations
+     *
+     * @var array
+     */
     protected $sharedPipelineContext = [ ];
 
+    /**
+     * Pipeline cache
+     *
+     * @var array
+     */
     protected $pipelines = [ ];
 
+    /**
+     * GraphQL Schema
+     *
+     * @var Schema
+     */
     protected $schema = null;
 
+    /**
+     * Initialize schema using config array
+     *
+     * @param array $config
+     */
     public function __construct($config)
     {
         $this->initAlambicBaseTypes();
@@ -43,14 +99,32 @@ class Alambic
         $this->initSchema();
     }
 
+    /**
+     * Set shared pipeline context
+     *
+     * @param array $newContext
+     */
     public function setSharedPipelineContext($newContext){
         $this->sharedPipelineContext=$newContext;
     }
 
+    /**
+     * Get shared pipeline context
+     *
+     * @return array
+     */
     public function getSharedPipelineContext(){
         return $this->sharedPipelineContext;
     }
 
+    /**
+     * Process GraphQL request
+     *
+     * @param $requestString
+     * @param array <string, string>|null $variableValues
+     * @param string|null $operationName
+     * @return array
+     */
     public function execute($requestString=null,$variableValues=null,$operationName=null){
 
         try {
