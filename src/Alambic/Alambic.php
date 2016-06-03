@@ -79,7 +79,7 @@ class Alambic
     protected $schema = null;
 
     /**
-     * Initialize schema using config array
+     * Construct request-ready Alambic using config array
      *
      * @param array $config
      */
@@ -145,6 +145,11 @@ class Alambic
         return $result;
     }
 
+    /**
+     * Load config from files in specified directory
+     *
+     * @param string $path
+     */
     protected function loadConfigFromFiles($path) {
         $connectorFiles = glob($path.'/connectors/*.json');
         foreach($connectorFiles as $filePath) {
@@ -160,6 +165,10 @@ class Alambic
         }
     }
 
+    /**
+     * Initialize Alambic types using GraphQL scalar types
+     *
+     */
     protected function initAlambicBaseTypes(){
         $this->alambicTypes=[
             "String"=>Type::string(),
@@ -170,6 +179,12 @@ class Alambic
         ];
     }
 
+    /**
+     * Create Alambic type using name and Alambic type definition. Also handles exposing query and mutation fields
+     *
+     * @param string $typeName
+     * @param array $type
+     */
     protected function loadAlambicType($typeName,$type){
         if (isset($this->alambicTypes[$typeName])){
             return;
@@ -288,6 +303,13 @@ class Alambic
         }
     }
 
+    /**
+     * Create valid GraphQL field using field key and definition array
+     *
+     * @param string $fieldKey
+     * @param array $fieldValue
+     * @return array
+     */
     protected function buildField($fieldKey,$fieldValue){
         if (!isset($this->alambicTypes[$fieldValue["type"]])&&isset($this->alambicTypeDefs[$fieldValue["type"]])){
             $this->loadAlambicType($fieldValue["type"],$this->alambicTypeDefs[$fieldValue["type"]]);
@@ -338,6 +360,11 @@ class Alambic
         }
         return $fieldResult;
     }
+
+    /**
+     * Initialize GraphQL Schema
+     *
+     */
     protected function initSchema(){
 
         foreach($this->alambicTypeDefs as $key=>$value){
@@ -357,18 +384,46 @@ class Alambic
         $this->schema = new Schema($queryType,$mutationType);
     }
 
+    /**
+     * Process read operation using connector pipeline
+     *
+     * @param string $connectorType
+     * @param array $payload
+     * @param array|null $customPrePipeline
+     * @param array|null $customPostPipeline
+     * @return array
+     */
     protected function runConnectorResolve($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null){
         $payload["isResolve"]=true;
         $payload["isMutation"]=false;
         return $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
     }
 
+    /**
+     * Process write operation using connector pipeline
+     *
+     * @param string $connectorType
+     * @param array $payload
+     * @param array|null $customPrePipeline
+     * @param array|null $customPostPipeline
+     * @return array
+     */
     protected function runConnectorExecute($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null){
         $payload["isResolve"]=false;
         $payload["isMutation"]=true;
         return $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
     }
 
+    /**
+     * Process operations using connector pipeline. Handles pipeline building, cache and params.
+     *
+     * @param string $connectorType
+     * @param array $payload
+     * @param array|null $customPrePipeline
+     * @param array|null $customPostPipeline
+     * @throws Exception
+     * @return array
+     */
     protected function runConnectorPipeline($connectorType,$payload,$customPrePipeline = null,$customPostPipeline = null){
         if(!isset($this->alambicConnectors[$connectorType])){
             throw new Exception("Undefined connector : ".$connectorType);
