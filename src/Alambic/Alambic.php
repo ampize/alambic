@@ -72,6 +72,13 @@ class Alambic
     protected $pipelines = [ ];
 
     /**
+     * Args to extract into pipeline params
+     *
+     * @var string[]
+     */
+    protected $optionArgs = ["start","limit","orderBy","orderByDirection"];
+
+    /**
      * GraphQL Schema
      *
      * @var Schema
@@ -247,6 +254,10 @@ class Alambic
                     $customPrePipeline=!empty($type["multiEndpoint"]["prePipeline"]) ? $type["multiEndpoint"]["prePipeline"] : null;
                     $customPostPipeline=!empty($type["multiEndpoint"]["postPipeline"]) ? $type["multiEndpoint"]["postPipeline"] : null;
                     $pipelineParams=!empty($type["multiEndpoint"]["pipelineParams"]) ? $type["multiEndpoint"]["pipelineParams"] : null;
+                    if(empty($queryArray["args"])){
+                        $queryArray["args"]=[];
+                    }
+                    $this->addOptionArgs($queryArray["args"]);
                     $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig,$connectorMethod,$customPrePipeline,$customPostPipeline,$pipelineParams){
                         return $this->runConnectorResolve($connectorType,[
                             "configs"=>$connectorConfig,
@@ -339,6 +350,12 @@ class Alambic
             $connectorConfig=$this->alambicTypeDefs[$fieldValue["type"]]["connector"]["configs"];
             $connectorType=$this->alambicTypeDefs[$fieldValue["type"]]["connector"]["type"];
             $multivalued=isset($fieldValue["multivalued"])&&$fieldValue["multivalued"];
+            if($multivalued){
+                if(empty($fieldResult["args"])){
+                    $fieldResult["args"]=[];
+                }
+                $this->addOptionArgs($fieldResult["args"]);
+            }
             $relation=isset($fieldValue["relation"])&&is_array($fieldValue["relation"]) ? $fieldValue["relation"] : [];
             $connectorMethod=!empty($fieldValue["methodName"]) ? $fieldValue["methodName"] : null;
             $customPrePipeline=!empty($fieldValue["prePipeline"]) ? $fieldValue["prePipeline"] : null;
@@ -359,6 +376,26 @@ class Alambic
 
         }
         return $fieldResult;
+    }
+
+    /**
+     * Add option args to multivalued request fields
+     *
+     * @param array $args
+     */
+    protected function addOptionArgs(&$args){
+        $args["start"]=[
+            "type"=>Type::int()
+        ];
+        $args["limit"]=[
+            "type"=>Type::int()
+        ];
+        $args["orderBy"]=[
+            "type"=>Type::string()
+        ];
+        $args["orderByDirection"]=[
+            "type"=>Type::string()
+        ];
     }
 
     /**
@@ -396,6 +433,18 @@ class Alambic
     protected function runConnectorResolve($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null){
         $payload["isResolve"]=true;
         $payload["isMutation"]=false;
+        $multivalued=isset($payload["multivalued"]) ? $payload["multivalued"] : false;
+        if($multivalued&&!empty($payload["args"])){
+            if(empty($payload["pipelineParams"])){
+                $payload["pipelineParams"]=[];
+            }
+            foreach($payload["args"] as $argKey=>$argValue){
+                if(in_array($argKey,$this->optionArgs)){
+                    $payload["pipelineParams"][$argKey]=$argValue;
+                    unset($payload["args"][$argKey]);
+                }
+            }
+        }
         return $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
     }
 
