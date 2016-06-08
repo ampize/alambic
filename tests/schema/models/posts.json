@@ -1,0 +1,41 @@
+{
+  "Post": {
+    "name" : "Posts",
+    "description" : "Blog Posts",
+    "fields" : {
+      "id" : {
+        "type" : "String",
+        "required" : true,
+        "description" : "Post Id"
+      },
+      "text" : {
+        "type" : "String",
+        "description" : "Post Text"
+      },
+      "author" : {
+        "type" : "String",
+        "description" : "Author Id"
+      }
+    },
+    "expose" : true,
+    "singleEndpoint" : {
+      "name" : "post",
+      "args" : {
+        "id" : {
+          "type" : "String",
+          "required" : true,
+          "description" : "Post Id"
+        }
+      }
+    },
+    "multiEndpoint" : {
+      "name" : "posts"
+    },
+    "connector" : {
+      "type" : "mySimpleDB",
+      "configs" : {
+        "fileName" : "posts.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "Users": {
+    "name": "User",
+    "description": "Writers",
+    "fields": {
+      "id": {
+        "type": "String",
+        "required": true,
+        "description": "User Id"
+      },
+      "name": {
+        "type": "String",
+        "description": "User Name"
+      },
+      "posts": {
+        "type": "Post",
+        "multivalued": true,
+        "args": {
+          "text": {
+            "type": "String"
+          }
+        },
+        "relation": {
+          "author": "id"
+        }
+      }
+    },
+    "expose": true,
+    "singleEndpoint": {
+      "name": "user",
+      "args": {
+        "id": {
+          "type": "String",
+          "required": true,
+          "description": "User Id"
+        }
+      }
+    },
+    "multiEndpoint": {
+      "name": "users"
+    },
+    "connector": {
+      "type": "mySimpleDB",
+      "configs": {
+        "fileName": "users.json"
+      }
+    }
+  }
+}
