@@ -44,7 +44,7 @@ The declaring type (Post) has a foreign key property (authorId) that references 
 }
 ~~~
 
-The relation is always built as a "key:value" expression where the key is target key name and the value is the declaring key name.
+The relation is always built as a "key:value" expression where the key is target type key name and the value is the declaring type key name.
 
 ## One to many
 
