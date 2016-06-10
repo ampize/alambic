@@ -43,7 +43,7 @@
             <li data-order="3"><a href="/start/queries.html">Queries</a></li>
         
             
-            <li data-order="2"><a href="/start/data.html">Data</a></li>
+            <li data-order="2"><a href="/start/model.html">Model</a></li>
         
     
         
@@ -112,97 +112,54 @@
     </h1>
 </div>
 
-<h2 id="installation">Installation</h2>
+<p>Let’s build a basic Alambic server from scratch.</p>
+
+<h2 id="server-requirements">Server Requirements</h2>
+
+<p>To use Alambic make sure that your server meets the following requirements:</p>
+
+<ul>
+  <li>PHP &gt;= 5.5.x</li>
+</ul>
+
+<h2 id="package-installation">Package Installation</h2>
 
 <p>The recommended way to install this package, is through composer.</p>
 
-<div class="language-bash highlighter-rouge"><pre class="highlight"><code>composer require webtales/alambic
+<p>If you have not yet installed Composer, refer to this <a href="https://getcomposer.org/doc/00-intro.md#installation-linux-unix-osx">documentation</a>.</p>
+
+<p>To start using Alambic in your project, you need to create a composer.json file that describes where to fetch the Alambic library.</p>
+
+<noscript><pre>400: Invalid request
+</pre></noscript>
+<script src="https://gist.github.com/2d04ef8b8091152fc2e1fe6b31c2099d.js"> </script>
+
+<p>After creating composer.json you can install the Alambic running:</p>
+
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code>php composer.phar install
 </code></pre>
 </div>
 
-<h2 id="usage">Usage</h2>
+<p>Alambic and its dependancies should now be downloaded in the /vendor directory.</p>
 
-<p>Once configured, an alambic instance can be used to execute GraphQL Requests.</p>
+<h2 id="create-data-files">Create data files</h2>
 
-<div class="language-php highlighter-rouge"><pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">use</span> <span class="nx">Alambic\Alambic</span><span class="p">;</span>
+<p>Before creating our Alambic server, we need some data to query.
+Our data will consist of two json files: Users and Posts.</p>
 
-<span class="nv">$alambic</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Alambic</span><span class="p">(</span><span class="nv">$alambicConfig</span><span class="p">);</span>
-<span class="nv">$result</span> <span class="o">=</span> <span class="nv">$alambic</span><span class="o">-&gt;</span><span class="na">execute</span><span class="p">(</span><span class="nv">$requestString</span><span class="p">,</span><span class="nv">$variableValues</span><span class="p">,</span><span class="nv">$operationName</span><span class="p">);</span>
-</code></pre>
-</div>
+<blockquote>
+  <p>Create the following files in a /data directory</p>
+</blockquote>
 
-<p>A basic configuration array would look something like this :</p>
+<noscript><pre>400: Invalid request
+</pre></noscript>
+<script src="https://gist.github.com/9eaf8be684f87df2f4a2bb1b2f8fcadb.js"> </script>
 
-<pre><code class="language-PHP">$alambicConfig=[
-            "alambicConnectors"=&gt;[
-                "WhateverDB"=&gt;array(
-                    "connectorClass"=&gt;"MyNamespace\\Connector\\WhateverDB",
-                    "prePipeline"=&gt;array(),
-                    "postPipeline"=&gt;array(),
-                )
-            ],
-            "alambicTypeDefs"=&gt;[
-                "MyModel"=&gt;[
-                    "name"=&gt;"MyModel",
-                    "description"=&gt;"Description for my data model",
-                    "fields"=&gt;[
-                        "id"=&gt;[
-                            "type"=&gt;"String",
-                            "required"=&gt;true,
-                            "description"=&gt;"Description for id field"
-                        ],
-                        "name"=&gt;[
-                            "type"=&gt;"String",
-                            "description"=&gt;"Description for name field"
-                        ]
-                    ],
-                    "expose"=&gt;true,
-                    "singleEndpoint"=&gt;[
-                        "name"=&gt;"mymodel",
-                        "args"=&gt;[
-                            "id"=&gt;[
-                                "type"=&gt;"String",
-                                "required"=&gt;true,
-                                "description"=&gt;"Description for id query param"
-                            ]
-                        ]
-                    ],
-                    "connector"=&gt;[
-                        "type"=&gt;"WhateverDB",
-                        "configs"=&gt;[
-                            "table"=&gt;"some_table"
-                        ]
-                    ]
-                ]
-            ]
-        ];
-</code></pre>
+<noscript><pre>400: Invalid request
+</pre></noscript>
+<script src="https://gist.github.com/00fceda862b9301bc8330a32b7ecc867.js"> </script>
 
-<p>Exposing this over a HTTP endpoint that accepts GraphQL queries can be as simple as the following naive example:</p>
-
-<div class="language-php highlighter-rouge"><pre class="highlight"><code><span class="cp">&lt;?php</span>
-<span class="k">use</span> <span class="nx">Alambic\Alambic</span><span class="p">;</span>
-<span class="k">use</span> <span class="nx">\Exception</span><span class="p">;</span>
-
-<span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'CONTENT_TYPE'</span><span class="p">])</span> <span class="o">&amp;&amp;</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'CONTENT_TYPE'</span><span class="p">]</span> <span class="o">===</span> <span class="s1">'application/json'</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nv">$rawBody</span> <span class="o">=</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">'php://input'</span><span class="p">);</span>
-    <span class="nv">$data</span> <span class="o">=</span> <span class="nb">json_decode</span><span class="p">(</span><span class="nv">$rawBody</span> <span class="o">?:</span> <span class="s1">''</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
-<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-    <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$_POST</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="nv">$requestString</span> <span class="o">=</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="s1">'query'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">'query'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
-<span class="nv">$operationName</span> <span class="o">=</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="s1">'operation'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">'operation'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
-<span class="nv">$variableValues</span> <span class="o">=</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="s1">'variables'</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">'variables'</span><span class="p">]</span> <span class="o">:</span> <span class="kc">null</span><span class="p">;</span>
-
-<span class="nv">$alambic</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Alambic</span><span class="p">(</span><span class="nv">$alambicConfig</span><span class="p">);</span>
-<span class="nv">$result</span> <span class="o">=</span> <span class="nv">$alambic</span><span class="o">-&gt;</span><span class="na">execute</span><span class="p">(</span><span class="nv">$requestString</span><span class="p">,</span><span class="nv">$variableValues</span><span class="p">,</span><span class="nv">$operationName</span><span class="p">);</span>
-
-<span class="nb">header</span><span class="p">(</span><span class="s1">'Content-Type: application/json'</span><span class="p">);</span>
-<span class="k">echo</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$result</span><span class="p">);</span>
-</code></pre>
-</div>
+<p>Once Alambic is installed and our basic data source is set, we can now configure your <a href="http://webtales.github.io/alambic/start/model">First Data Model</a>.</p>
 
 
                     </div>
