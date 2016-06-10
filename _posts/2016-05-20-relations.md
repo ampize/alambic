@@ -6,8 +6,6 @@ date: 2016-05-20 12:11:58
 order: 2
 ---
 
-# Relations
-
 Individual object types are easy to setup, but when building real applications developers will often need to connect objects together and build relations.
 
 With relational databases, such as MySQL, relations are included in the core system, and querying multiple objects through their relations is easily done through SQL with JOINS statements, sometimes at the expense of performance.
