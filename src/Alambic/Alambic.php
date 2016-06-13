@@ -499,6 +499,6 @@ class Alambic
             }
             $this->pipelines[$pipeLineKey]=$pipelineBuilder->build();
         }
-        return $this->pipelines[$pipeLineKey]->process($payload);
+        return $this->pipelines[$pipeLineKey]->process($payload)["response"];
     }
 }

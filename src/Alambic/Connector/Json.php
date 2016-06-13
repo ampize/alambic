@@ -37,12 +37,14 @@ class Json
                 }
             }
             if ($recordMatches&&!$multivalued){
-                return $record;
+                $payload["response"]=$record;
+                return $payload;
             } elseif($recordMatches&&$multivalued){
                 $result[]=$record;
             }
         }
-        return $result;
+        $payload["response"]=$result;
+        return $payload;
     }
 
     public function execute($payload=[],$jsonArray,$filePath){
@@ -77,7 +79,8 @@ class Json
             }
         }
         file_put_contents($filePath,json_encode($jsonArray));
-        return $result;
+        $payload["response"]=$result;
+        return $payload;
     }
 
 }
