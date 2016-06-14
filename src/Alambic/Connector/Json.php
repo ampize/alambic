@@ -10,6 +10,10 @@ class Json
 {
     public function __invoke($payload=[])
     {
+
+        if (isset($payload["response"])) {
+          return $payload;
+        }
         $configs=isset($payload["configs"]) ? $payload["configs"] : [];
         $baseConfig=isset($payload["connectorBaseConfig"]) ? $payload["connectorBaseConfig"] : [];
         if(empty($configs["fullPath"])&&(empty($configs["fileName"])||empty($baseConfig["basePath"]))){
