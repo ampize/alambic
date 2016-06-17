@@ -224,15 +224,15 @@ class Alambic
                     $connectorMethod=!empty($type["singleEndpoint"]["methodName"]) ? $type["singleEndpoint"]["methodName"] : null;
                     $customPrePipeline=!empty($type["singleEndpoint"]["prePipeline"]) ? $type["singleEndpoint"]["prePipeline"] : null;
                     $customPostPipeline=!empty($type["singleEndpoint"]["postPipeline"]) ? $type["singleEndpoint"]["postPipeline"] : null;
-                    $pipelineParams=!empty($type["singleEndpoint"]["pipelineParams"]) ? $type["singleEndpoint"]["pipelineParams"] : null;
-                    $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig,$connectorMethod,$customPrePipeline,$customPostPipeline,$pipelineParams){
+                    $pipelineParams=!empty($type["singleEndpoint"]["pipelineParams"]) ? $type["singleEndpoint"]["pipelineParams"] : [];
+                    $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig,$connectorMethod,$customPrePipeline,$customPostPipeline,$pipelineParams,$typeName){
                         return $this->runConnectorResolve($connectorType,[
                             "configs"=>$connectorConfig,
                             "args"=>$args,
                             "multivalued"=>false,
                             "methodName"=>$connectorMethod,
                             "pipelineParams"=>$pipelineParams
-                        ],$customPrePipeline,$customPostPipeline);
+                        ],$customPrePipeline,$customPostPipeline,$typeName);
                     };
                 }
                 $this->alambicQueryFields[$type["singleEndpoint"]["name"]]=$queryArray;
@@ -253,19 +253,19 @@ class Alambic
                     $connectorMethod=!empty($type["multiEndpoint"]["methodName"]) ? $type["multiEndpoint"]["methodName"] : null;
                     $customPrePipeline=!empty($type["multiEndpoint"]["prePipeline"]) ? $type["multiEndpoint"]["prePipeline"] : null;
                     $customPostPipeline=!empty($type["multiEndpoint"]["postPipeline"]) ? $type["multiEndpoint"]["postPipeline"] : null;
-                    $pipelineParams=!empty($type["multiEndpoint"]["pipelineParams"]) ? $type["multiEndpoint"]["pipelineParams"] : null;
+                    $pipelineParams=!empty($type["multiEndpoint"]["pipelineParams"]) ? $type["multiEndpoint"]["pipelineParams"] : [];
                     if(empty($queryArray["args"])){
                         $queryArray["args"]=[];
                     }
                     $this->addOptionArgs($queryArray["args"]);
-                    $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig,$connectorMethod,$customPrePipeline,$customPostPipeline,$pipelineParams){
+                    $queryArray["resolve"]=function ($root, $args) use ($connectorType,$connectorConfig,$connectorMethod,$customPrePipeline,$customPostPipeline,$pipelineParams,$typeName){
                         return $this->runConnectorResolve($connectorType,[
                             "configs"=>$connectorConfig,
                             "args"=>$args,
                             "multivalued"=>true,
                             "methodName"=>$connectorMethod,
                             "pipelineParams"=>$pipelineParams
-                        ],$customPrePipeline,$customPostPipeline);
+                        ],$customPrePipeline,$customPostPipeline,$typeName);
                     };
                 }
                 $this->alambicQueryFields[$type["multiEndpoint"]["name"]]=$queryArray;
@@ -360,10 +360,14 @@ class Alambic
             $connectorMethod=!empty($fieldValue["methodName"]) ? $fieldValue["methodName"] : null;
             $customPrePipeline=!empty($fieldValue["prePipeline"]) ? $fieldValue["prePipeline"] : null;
             $customPostPipeline=!empty($fieldValue["postPipeline"]) ? $fieldValue["postPipeline"] : null;
-            $pipelineParams=!empty($fieldValue["pipelineParams"]) ? $fieldValue["pipelineParams"] : null;
-            $fieldResult["resolve"]=function ($obj,$args=[]) use ($connectorType,$connectorConfig,$multivalued,$relation,$connectorMethod,$customPrePipeline,$customPostPipeline,$pipelineParams){
+            $pipelineParams=!empty($fieldValue["pipelineParams"]) ? $fieldValue["pipelineParams"] : [];
+            $targetType=$fieldValue["type"];
+            $fieldResult["resolve"]=function ($obj,$args=[]) use ($connectorType,$connectorConfig,$multivalued,$relation,$connectorMethod,$customPrePipeline,$customPostPipeline,$pipelineParams,$targetType){
                 foreach($relation as $relKey=>$relValue){
                     $args[$relKey]=$obj[$relValue];
+                }
+                if (isset($obj["currentRequestString"])){
+                    $pipelineParams["parentRequestString"]=$obj["currentRequestString"];
                 }
                 return $this->runConnectorResolve($connectorType,[
                     "configs"=>$connectorConfig,
@@ -371,7 +375,7 @@ class Alambic
                     "multivalued"=>$multivalued,
                     "methodName"=>$connectorMethod,
                     "pipelineParams"=>$pipelineParams
-                ],$customPrePipeline,$customPostPipeline);
+                ],$customPrePipeline,$customPostPipeline,$targetType);
             };
 
         }
@@ -428,16 +432,22 @@ class Alambic
      * @param array $payload
      * @param array|null $customPrePipeline
      * @param array|null $customPostPipeline
+     * @param string $targetType
      * @return array
      */
-    protected function runConnectorResolve($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null){
+    protected function runConnectorResolve($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null,$targetType=""){
         $payload["isResolve"]=true;
         $payload["isMutation"]=false;
         $multivalued=isset($payload["multivalued"]) ? $payload["multivalued"] : false;
+        $currentRequestString=$targetType;
+        if(!empty($payload["args"])){
+            $currentRequestString=$currentRequestString.implode("",array_values($payload["args"]));
+        }
+        if($multivalued){
+            $currentRequestString=$currentRequestString."multivalued";
+        }
+        $payload["pipelineParams"]["currentRequestString"]=$currentRequestString;
         if($multivalued&&!empty($payload["args"])){
-            if(empty($payload["pipelineParams"])){
-                $payload["pipelineParams"]=[];
-            }
             foreach($payload["args"] as $argKey=>$argValue){
                 if(in_array($argKey,$this->optionArgs)){
                     $payload["pipelineParams"][$argKey]=$argValue;
@@ -445,7 +455,17 @@ class Alambic
                 }
             }
         }
-        return $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
+        $result= $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
+        if(!empty($result)){
+            if($multivalued){
+                foreach($result as &$dataItem){
+                    $dataItem["currentRequestString"]=$currentRequestString;
+                }
+            } else {
+                $result["currentRequestString"]=$currentRequestString;
+            }
+        }
+        return $result;
     }
 
     /**
