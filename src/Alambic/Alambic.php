@@ -441,7 +441,7 @@ class Alambic
         $multivalued=isset($payload["multivalued"]) ? $payload["multivalued"] : false;
         $currentRequestString=$targetType;
         if(!empty($payload["args"])){
-            $currentRequestString=$currentRequestString.implode("",array_values($payload["args"]));
+            $currentRequestString=$currentRequestString.json_encode($payload["args"]);
         }
         if($multivalued){
             $currentRequestString=$currentRequestString."multivalued";
