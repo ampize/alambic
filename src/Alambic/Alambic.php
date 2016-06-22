@@ -310,13 +310,13 @@ class Alambic
                             $customPrePipeline = !empty($mutationValue["prePipeline"]) ? $mutationValue["prePipeline"] : null;
                             $customPostPipeline = !empty($mutationValue["postPipeline"]) ? $mutationValue["postPipeline"] : null;
                             $pipelineParams = !empty($mutationValue["pipelineParams"]) ? $mutationValue["pipelineParams"] : null;
-                            $mutationArray["resolve"] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams) {
+                            $mutationArray["resolve"] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
                                 return $this->runConnectorExecute($connectorType, [
                                     "configs" => $connectorConfig,
                                     "args" => $args,
                                     "methodName" => $connectorMethod,
                                     "pipelineParams" => $pipelineParams
-                                ], $customPrePipeline, $customPostPipeline);
+                                ], $customPrePipeline, $customPostPipeline, $typeName);
                             };
                         }
                         $this->alambicMutationFields[$mutationKey] = $mutationArray;
@@ -454,10 +454,10 @@ class Alambic
         $multivalued=isset($payload["multivalued"]) ? $payload["multivalued"] : false;
         $currentRequestString=$targetType;
         if(!empty($payload["args"])){
-            $currentRequestString=$currentRequestString.json_encode($payload["args"]);
+            $currentRequestString=$currentRequestString."/".json_encode($payload["args"]);
         }
         if($multivalued){
-            $currentRequestString=$currentRequestString."multivalued";
+            $currentRequestString=$currentRequestString."/multivalued";
         }
         $payload["pipelineParams"]["currentRequestString"]=$currentRequestString;
         if($multivalued&&!empty($payload["args"])){
@@ -490,10 +490,13 @@ class Alambic
      * @param array|null $customPostPipeline
      * @return array
      */
-    protected function runConnectorExecute($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null){
+    protected function runConnectorExecute($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null,$targetType=""){
         $payload["isResolve"]=false;
         $payload["isMutation"]=true;
-        return $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
+        $payload["type"]=$targetType;
+        $result = $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
+        $result["type"]=$targetType;
+        return $result;
     }
 
     /**
