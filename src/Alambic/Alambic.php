@@ -3,7 +3,7 @@
 namespace Alambic;
 
 use GraphQL\GraphQL;
-use \Exception;
+use Exception;
 use GraphQL\Schema;
 use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\ObjectType;
@@ -11,130 +11,131 @@ use GraphQL\Type\Definition\Type;
 use League\Pipeline\PipelineBuilder;
 
 /**
- * Main Alambic class
+ * Main Alambic class.
  *
  * Handle initialization, configuration and request processing
  *
  * @author Alexandru-Dobre
- *
  */
-
 class Alambic
 {
     /**
-     * Alambic type definitions
+     * Alambic type definitions.
      *
      * @var array[]
      */
-    protected $alambicTypeDefs = [ ];
+    protected $alambicTypeDefs = [];
 
     /**
-     * Alambic types
+     * Alambic types.
      *
      * @var ObjectType[]
      */
-    protected $alambicTypes = [ ];
+    protected $alambicTypes = [];
 
     /**
-     * Alambic query fields
+     * Alambic query fields.
      *
      * @var array[]
      */
-    protected $alambicQueryFields = [ ];
+    protected $alambicQueryFields = [];
 
     /**
-     * Alambic mutation fields
+     * Alambic mutation fields.
      *
      * @var array[]
      */
-    protected $alambicMutationFields = [ ];
+    protected $alambicMutationFields = [];
 
     /**
-     * Alambic connector  config
+     * Alambic connector  config.
      *
      * @var array
      */
-    protected $alambicConnectors = [ ];
+    protected $alambicConnectors = [];
 
     /**
-     * Shared pipeline context
+     * Shared pipeline context.
      *
      * Is merged into pipeline params for all operations
      *
      * @var array
      */
-    protected $sharedPipelineContext = [ ];
+    protected $sharedPipelineContext = [];
 
     /**
-     * Pipeline cache
+     * Pipeline cache.
      *
      * @var array
      */
-    protected $pipelines = [ ];
+    protected $pipelines = [];
 
     /**
-     * Args to extract into pipeline params
+     * Args to extract into pipeline params.
      *
      * @var string[]
      */
-    protected $optionArgs = ["start","limit","orderBy","orderByDirection"];
+    protected $optionArgs = ['start', 'limit', 'orderBy', 'orderByDirection'];
 
     /**
-     * GraphQL Schema
+     * GraphQL Schema.
      *
      * @var Schema
      */
     protected $schema = null;
 
     /**
-     * Construct request-ready Alambic using config array
+     * Construct request-ready Alambic using config array.
      *
      * @param array $config
      */
     public function __construct($config)
     {
         $this->initAlambicBaseTypes();
-        if (is_string($config)&&is_dir($config)) {
+        if (is_string($config) && is_dir($config)) {
             $this->loadConfigFromFiles($config);
         } else {
-            if(!empty($config["alambicConnectors"])){
-                $this->alambicConnectors=$config["alambicConnectors"];
+            if (!empty($config['alambicConnectors'])) {
+                $this->alambicConnectors = $config['alambicConnectors'];
             }
-            if(!empty($config["alambicTypeDefs"])){
-                $this->alambicTypeDefs=$config["alambicTypeDefs"];
+            if (!empty($config['alambicTypeDefs'])) {
+                $this->alambicTypeDefs = $config['alambicTypeDefs'];
             }
         }
         $this->initSchema();
     }
 
     /**
-     * Set shared pipeline context
+     * Set shared pipeline context.
      *
      * @param array $newContext
      */
-    public function setSharedPipelineContext($newContext){
-        $this->sharedPipelineContext=$newContext;
+    public function setSharedPipelineContext($newContext)
+    {
+        $this->sharedPipelineContext = $newContext;
     }
 
     /**
-     * Get shared pipeline context
+     * Get shared pipeline context.
      *
      * @return array
      */
-    public function getSharedPipelineContext(){
+    public function getSharedPipelineContext()
+    {
         return $this->sharedPipelineContext;
     }
 
     /**
-     * Process GraphQL request
+     * Process GraphQL request.
      *
      * @param $requestString
      * @param array <string, string>|null $variableValues
-     * @param string|null $operationName
+     * @param string|null                 $operationName
+     *
      * @return array
      */
-    public function execute($requestString=null,$variableValues=null,$operationName=null){
-
+    public function execute($requestString = null, $variableValues = null, $operationName = null)
+    {
         try {
             $result = GraphQL::execute(
                 $this->schema,
@@ -146,181 +147,181 @@ class Alambic
         } catch (Exception $exception) {
             $result = [
                 'errors' => [
-                    ['message' => $exception->getMessage()]
-                ]
+                    ['message' => $exception->getMessage()],
+                ],
             ];
         }
+
         return $result;
     }
 
     /**
-     * Load config from files in specified directory
+     * Load config from files in specified directory.
      *
      * @param string $path
      */
-    protected function loadConfigFromFiles($path) {
+    protected function loadConfigFromFiles($path)
+    {
         $connectorFiles = glob($path.'/connectors/*.json');
-        foreach($connectorFiles as $filePath) {
+        foreach ($connectorFiles as $filePath) {
             $tempJson = file_get_contents($filePath);
-            $jsonArray=json_decode($tempJson,true);
+            $jsonArray = json_decode($tempJson, true);
             $this->alambicConnectors = array_merge($this->alambicConnectors, $jsonArray);
         }
         $modelFiles = glob($path.'/models/*.json');
-        foreach($modelFiles as $filePath) {
+        foreach ($modelFiles as $filePath) {
             $tempJson = file_get_contents($filePath);
-            $jsonArray=json_decode($tempJson,true);
+            $jsonArray = json_decode($tempJson, true);
             $this->alambicTypeDefs = array_merge($this->alambicTypeDefs, $jsonArray);
         }
     }
 
     /**
-     * Initialize Alambic types using GraphQL scalar types
-     *
+     * Initialize Alambic types using GraphQL scalar types.
      */
-    protected function initAlambicBaseTypes(){
-        $this->alambicTypes=[
-            "String"=>Type::string(),
-            "Int"=>Type::int(),
-            "Float"=>Type::float(),
-            "Boolean"=>Type::boolean(),
-            "ID"=>Type::id(),
+    protected function initAlambicBaseTypes()
+    {
+        $this->alambicTypes = [
+            'String' => Type::string(),
+            'Int' => Type::int(),
+            'Float' => Type::float(),
+            'Boolean' => Type::boolean(),
+            'ID' => Type::id(),
         ];
     }
 
     /**
-     * Create Alambic type using name and Alambic type definition. Also handles exposing query and mutation fields
+     * Create Alambic type using name and Alambic type definition. Also handles exposing query and mutation fields.
      *
      * @param string $typeName
-     * @param array $type
+     * @param array  $type
      */
-    protected function loadAlambicType($typeName,$type){
-        if (isset($this->alambicTypes[$typeName])){
+    protected function loadAlambicType($typeName, $type)
+    {
+        if (isset($this->alambicTypes[$typeName])) {
             return;
         }
-        if(isset($type["modelType"])&&$type["modelType"]=="Enum"){
+        if (isset($type['modelType']) && $type['modelType'] == 'Enum') {
             $typeArray = [
-                "name" => $type["name"],
-                "values" => $type["values"]
+                'name' => $type['name'],
+                'values' => $type['values'],
             ];
-            if (!empty($type["description"])) {
-                $typeArray["description"] = $type["description"];
+            if (!empty($type['description'])) {
+                $typeArray['description'] = $type['description'];
             }
             $this->alambicTypes[$typeName] = new EnumType($typeArray);
         } else {
-
             $typeArray = [
-                "name" => $type["name"],
-                "fields" => []
+                'name' => $type['name'],
+                'fields' => [],
             ];
-            if (!empty($type["description"])) {
-                $typeArray["description"] = $type["description"];
+            if (!empty($type['description'])) {
+                $typeArray['description'] = $type['description'];
             }
-            foreach ($type["fields"] as $fieldKey => $fieldValue) {
-                $typeArray["fields"][$fieldKey] = $this->buildField($fieldKey, $fieldValue);
+            foreach ($type['fields'] as $fieldKey => $fieldValue) {
+                $typeArray['fields'][$fieldKey] = $this->buildField($fieldKey, $fieldValue);
             }
             $this->alambicTypes[$typeName] = new ObjectType($typeArray);
-            if (isset($type["expose"]) && $type["expose"]) {
-                if (!empty($type["singleEndpoint"]) && is_array($type["singleEndpoint"]) && !empty($type["singleEndpoint"]["name"])) {
+            if (isset($type['expose']) && $type['expose']) {
+                if (!empty($type['singleEndpoint']) && is_array($type['singleEndpoint']) && !empty($type['singleEndpoint']['name'])) {
                     $queryArray = [
-                        "type" => $this->alambicTypes[$typeName],
+                        'type' => $this->alambicTypes[$typeName],
                     ];
-                    if (!empty($type["singleEndpoint"]["args"]) && is_array($type["singleEndpoint"]["args"])) {
-                        $queryArray["args"] = [];
-                        foreach ($type["singleEndpoint"]["args"] as $sargFieldKey => $sargFieldValue) {
-                            $queryArray["args"][$sargFieldKey] = $this->buildField($sargFieldKey, $sargFieldValue);
+                    if (!empty($type['singleEndpoint']['args']) && is_array($type['singleEndpoint']['args'])) {
+                        $queryArray['args'] = [];
+                        foreach ($type['singleEndpoint']['args'] as $sargFieldKey => $sargFieldValue) {
+                            $queryArray['args'][$sargFieldKey] = $this->buildField($sargFieldKey, $sargFieldValue);
                         }
                     }
-                    if (!empty($type["connector"]) && is_array($type["connector"])) {
-                        $connectorConfig = $type["connector"]["configs"];
-                        $connectorType = $type["connector"]["type"];
-                        $connectorMethod = !empty($type["singleEndpoint"]["methodName"]) ? $type["singleEndpoint"]["methodName"] : null;
-                        $customPrePipeline = !empty($type["singleEndpoint"]["prePipeline"]) ? $type["singleEndpoint"]["prePipeline"] : null;
-                        $customPostPipeline = !empty($type["singleEndpoint"]["postPipeline"]) ? $type["singleEndpoint"]["postPipeline"] : null;
-                        $pipelineParams = !empty($type["singleEndpoint"]["pipelineParams"]) ? $type["singleEndpoint"]["pipelineParams"] : [];
-                        $queryArray["resolve"] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
+                    if (!empty($type['connector']) && is_array($type['connector'])) {
+                        $connectorConfig = $type['connector']['configs'];
+                        $connectorType = $type['connector']['type'];
+                        $connectorMethod = !empty($type['singleEndpoint']['methodName']) ? $type['singleEndpoint']['methodName'] : null;
+                        $customPrePipeline = !empty($type['singleEndpoint']['prePipeline']) ? $type['singleEndpoint']['prePipeline'] : null;
+                        $customPostPipeline = !empty($type['singleEndpoint']['postPipeline']) ? $type['singleEndpoint']['postPipeline'] : null;
+                        $pipelineParams = !empty($type['singleEndpoint']['pipelineParams']) ? $type['singleEndpoint']['pipelineParams'] : [];
+                        $queryArray['resolve'] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
                             return $this->runConnectorResolve($connectorType, [
-                                "configs" => $connectorConfig,
-                                "args" => $args,
-                                "multivalued" => false,
-                                "methodName" => $connectorMethod,
-                                "pipelineParams" => $pipelineParams
+                                'configs' => $connectorConfig,
+                                'args' => $args,
+                                'multivalued' => false,
+                                'methodName' => $connectorMethod,
+                                'pipelineParams' => $pipelineParams,
                             ], $customPrePipeline, $customPostPipeline, $typeName);
                         };
                     }
-                    $this->alambicQueryFields[$type["singleEndpoint"]["name"]] = $queryArray;
+                    $this->alambicQueryFields[$type['singleEndpoint']['name']] = $queryArray;
                 }
-                if (!empty($type["multiEndpoint"]) && is_array($type["multiEndpoint"]) && !empty($type["multiEndpoint"]["name"])) {
+                if (!empty($type['multiEndpoint']) && is_array($type['multiEndpoint']) && !empty($type['multiEndpoint']['name'])) {
                     $queryArray = [
-                        "type" => Type::listOf($this->alambicTypes[$typeName]),
+                        'type' => Type::listOf($this->alambicTypes[$typeName]),
                     ];
-                    if (!empty($type["multiEndpoint"]["args"]) && is_array($type["multiEndpoint"]["args"])) {
-                        $queryArray["args"] = [];
-                        foreach ($type["multiEndpoint"]["args"] as $margFieldKey => $margFieldValue) {
-                            $queryArray["args"][$margFieldKey] = $this->buildField($margFieldKey, $margFieldValue);
+                    if (!empty($type['multiEndpoint']['args']) && is_array($type['multiEndpoint']['args'])) {
+                        $queryArray['args'] = [];
+                        foreach ($type['multiEndpoint']['args'] as $margFieldKey => $margFieldValue) {
+                            $queryArray['args'][$margFieldKey] = $this->buildField($margFieldKey, $margFieldValue);
                         }
                     }
-                    if (!empty($type["connector"]) && is_array($type["connector"])) {
-                        $connectorConfig = $type["connector"]["configs"];
-                        $connectorType = $type["connector"]["type"];
-                        $connectorMethod = !empty($type["multiEndpoint"]["methodName"]) ? $type["multiEndpoint"]["methodName"] : null;
-                        $customPrePipeline = !empty($type["multiEndpoint"]["prePipeline"]) ? $type["multiEndpoint"]["prePipeline"] : null;
-                        $customPostPipeline = !empty($type["multiEndpoint"]["postPipeline"]) ? $type["multiEndpoint"]["postPipeline"] : null;
-                        $pipelineParams = !empty($type["multiEndpoint"]["pipelineParams"]) ? $type["multiEndpoint"]["pipelineParams"] : [];
-                        if (empty($queryArray["args"])) {
-                            $queryArray["args"] = [];
+                    if (!empty($type['connector']) && is_array($type['connector'])) {
+                        $connectorConfig = $type['connector']['configs'];
+                        $connectorType = $type['connector']['type'];
+                        $connectorMethod = !empty($type['multiEndpoint']['methodName']) ? $type['multiEndpoint']['methodName'] : null;
+                        $customPrePipeline = !empty($type['multiEndpoint']['prePipeline']) ? $type['multiEndpoint']['prePipeline'] : null;
+                        $customPostPipeline = !empty($type['multiEndpoint']['postPipeline']) ? $type['multiEndpoint']['postPipeline'] : null;
+                        $pipelineParams = !empty($type['multiEndpoint']['pipelineParams']) ? $type['multiEndpoint']['pipelineParams'] : [];
+                        if (empty($queryArray['args'])) {
+                            $queryArray['args'] = [];
                         }
-                        $this->addOptionArgs($queryArray["args"]);
-                        $queryArray["resolve"] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
+                        $this->addOptionArgs($queryArray['args']);
+                        $queryArray['resolve'] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
                             return $this->runConnectorResolve($connectorType, [
-                                "configs" => $connectorConfig,
-                                "args" => $args,
-                                "multivalued" => true,
-                                "methodName" => $connectorMethod,
-                                "pipelineParams" => $pipelineParams
+                                'configs' => $connectorConfig,
+                                'args' => $args,
+                                'multivalued' => true,
+                                'methodName' => $connectorMethod,
+                                'pipelineParams' => $pipelineParams,
                             ], $customPrePipeline, $customPostPipeline, $typeName);
                         };
                     }
-                    $this->alambicQueryFields[$type["multiEndpoint"]["name"]] = $queryArray;
+                    $this->alambicQueryFields[$type['multiEndpoint']['name']] = $queryArray;
                 }
-                if (!empty($type["mutations"]) && is_array($type["mutations"])) {
-
-                    foreach ($type["mutations"] as $mutationKey => $mutationValue) {
-                        if (!isset($this->alambicTypes[$mutationValue["type"]]) && isset($this->alambicTypeDefs[$mutationValue["type"]])) {
-                            $this->loadAlambicType($mutationValue["type"], $this->alambicTypeDefs[$mutationValue["type"]]);
+                if (!empty($type['mutations']) && is_array($type['mutations'])) {
+                    foreach ($type['mutations'] as $mutationKey => $mutationValue) {
+                        if (!isset($this->alambicTypes[$mutationValue['type']]) && isset($this->alambicTypeDefs[$mutationValue['type']])) {
+                            $this->loadAlambicType($mutationValue['type'], $this->alambicTypeDefs[$mutationValue['type']]);
                         }
-                        $mutationResultType = $this->alambicTypes[$mutationValue["type"]];
-                        if (isset($mutationValue["multivalued"]) && $mutationValue["multivalued"]) {
+                        $mutationResultType = $this->alambicTypes[$mutationValue['type']];
+                        if (isset($mutationValue['multivalued']) && $mutationValue['multivalued']) {
                             $mutationResultType = Type::listOf($mutationResultType);
                         }
-                        if (isset($mutationValue["required"]) && $mutationValue["required"]) {
+                        if (isset($mutationValue['required']) && $mutationValue['required']) {
                             $mutationResultType = Type::nonNull($mutationResultType);
                         }
                         $mutationArray = [
-                            "type" => $mutationResultType,
-                            "args" => []
+                            'type' => $mutationResultType,
+                            'args' => [],
                         ];
-                        foreach ($mutationValue["args"] as $mutargFieldKey => $mutargFieldValue) {
-                            $mutationArray["args"][$mutargFieldKey] = $this->buildField($mutargFieldKey, $mutargFieldValue);
+                        foreach ($mutationValue['args'] as $mutargFieldKey => $mutargFieldValue) {
+                            $mutationArray['args'][$mutargFieldKey] = $this->buildField($mutargFieldKey, $mutargFieldValue);
                         }
 
-                        if (!empty($type["connector"]) && is_array($type["connector"])) {
-                            $connectorConfig = $type["connector"]["configs"];
-                            $connectorMethod = $mutationValue["methodName"];
-                            $connectorType = $type["connector"]["type"];
-                            $customPrePipeline = !empty($mutationValue["prePipeline"]) ? $mutationValue["prePipeline"] : null;
-                            $customPostPipeline = !empty($mutationValue["postPipeline"]) ? $mutationValue["postPipeline"] : null;
-                            $pipelineParams = !empty($mutationValue["pipelineParams"]) ? $mutationValue["pipelineParams"] : null;
-                            $mutationArray["resolve"] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
+                        if (!empty($type['connector']) && is_array($type['connector'])) {
+                            $connectorConfig = $type['connector']['configs'];
+                            $connectorMethod = $mutationValue['methodName'];
+                            $connectorType = $type['connector']['type'];
+                            $customPrePipeline = !empty($mutationValue['prePipeline']) ? $mutationValue['prePipeline'] : null;
+                            $customPostPipeline = !empty($mutationValue['postPipeline']) ? $mutationValue['postPipeline'] : null;
+                            $pipelineParams = !empty($mutationValue['pipelineParams']) ? $mutationValue['pipelineParams'] : null;
+                            $mutationArray['resolve'] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
                                 return $this->runConnectorExecute($connectorType, [
-                                    "configs" => $connectorConfig,
-                                    "args" => $args,
-                                    "methodName" => $connectorMethod,
-                                    "pipelineParams" => $pipelineParams
+                                    'configs' => $connectorConfig,
+                                    'args' => $args,
+                                    'methodName' => $connectorMethod,
+                                    'pipelineParams' => $pipelineParams,
                                 ], $customPrePipeline, $customPostPipeline, $typeName);
                             };
                         }
                         $this->alambicMutationFields[$mutationKey] = $mutationArray;
-
                     }
                 }
             }
@@ -328,213 +329,225 @@ class Alambic
     }
 
     /**
-     * Create valid GraphQL field using field key and definition array
+     * Create valid GraphQL field using field key and definition array.
      *
      * @param string $fieldKey
-     * @param array $fieldValue
+     * @param array  $fieldValue
+     *
      * @return array
      */
-    protected function buildField($fieldKey,$fieldValue){
-        if (!isset($this->alambicTypes[$fieldValue["type"]])&&isset($this->alambicTypeDefs[$fieldValue["type"]])){
-            $this->loadAlambicType($fieldValue["type"],$this->alambicTypeDefs[$fieldValue["type"]]);
+    protected function buildField($fieldKey, $fieldValue)
+    {
+        if (!isset($this->alambicTypes[$fieldValue['type']]) && isset($this->alambicTypeDefs[$fieldValue['type']])) {
+            $this->loadAlambicType($fieldValue['type'], $this->alambicTypeDefs[$fieldValue['type']]);
         }
-        $baseTypeResult=$this->alambicTypes[$fieldValue["type"]];
+        $baseTypeResult = $this->alambicTypes[$fieldValue['type']];
 
-
-        if(isset($fieldValue["multivalued"])&&$fieldValue["multivalued"]){
-            $baseTypeResult=Type::listOf($baseTypeResult);
+        if (isset($fieldValue['multivalued']) && $fieldValue['multivalued']) {
+            $baseTypeResult = Type::listOf($baseTypeResult);
         }
-        if(isset($fieldValue["required"])&&$fieldValue["required"]){
-            $baseTypeResult=Type::nonNull($baseTypeResult);
+        if (isset($fieldValue['required']) && $fieldValue['required']) {
+            $baseTypeResult = Type::nonNull($baseTypeResult);
         }
-        $fieldResult=[
-            "type"=>$baseTypeResult
+        $fieldResult = [
+            'type' => $baseTypeResult,
         ];
-        if(!empty($fieldValue["description"])){
-            $fieldResult["description"]=$fieldValue["description"];
+        if (!empty($fieldValue['description'])) {
+            $fieldResult['description'] = $fieldValue['description'];
         }
-        if(!empty($fieldValue["args"])&&is_array($fieldValue["args"])){
-            $fieldResult["args"]=[ ];
-            foreach($fieldValue["args"] as $eargFieldKey=>$eargFieldValue){
-                $fieldResult["args"][$eargFieldKey]=$this->buildField($eargFieldKey,$eargFieldValue);
+        if (!empty($fieldValue['args']) && is_array($fieldValue['args'])) {
+            $fieldResult['args'] = [];
+            foreach ($fieldValue['args'] as $eargFieldKey => $eargFieldValue) {
+                $fieldResult['args'][$eargFieldKey] = $this->buildField($eargFieldKey, $eargFieldValue);
             }
         }
-        if (isset($this->alambicTypeDefs[$fieldValue["type"]],$this->alambicTypeDefs[$fieldValue["type"]]["connector"])){
-            $connectorConfig=$this->alambicTypeDefs[$fieldValue["type"]]["connector"]["configs"];
-            $connectorType=$this->alambicTypeDefs[$fieldValue["type"]]["connector"]["type"];
-            $multivalued=isset($fieldValue["multivalued"])&&$fieldValue["multivalued"];
-            if($multivalued){
-                if(empty($fieldResult["args"])){
-                    $fieldResult["args"]=[];
+        if (isset($this->alambicTypeDefs[$fieldValue['type']], $this->alambicTypeDefs[$fieldValue['type']]['connector'])) {
+            $connectorConfig = $this->alambicTypeDefs[$fieldValue['type']]['connector']['configs'];
+            $connectorType = $this->alambicTypeDefs[$fieldValue['type']]['connector']['type'];
+            $multivalued = isset($fieldValue['multivalued']) && $fieldValue['multivalued'];
+            if ($multivalued) {
+                if (empty($fieldResult['args'])) {
+                    $fieldResult['args'] = [];
                 }
-                $this->addOptionArgs($fieldResult["args"]);
+                $this->addOptionArgs($fieldResult['args']);
             }
-            $relation=isset($fieldValue["relation"])&&is_array($fieldValue["relation"]) ? $fieldValue["relation"] : [];
-            $connectorMethod=!empty($fieldValue["methodName"]) ? $fieldValue["methodName"] : null;
-            $customPrePipeline=!empty($fieldValue["prePipeline"]) ? $fieldValue["prePipeline"] : null;
-            $customPostPipeline=!empty($fieldValue["postPipeline"]) ? $fieldValue["postPipeline"] : null;
-            $pipelineParams=!empty($fieldValue["pipelineParams"]) ? $fieldValue["pipelineParams"] : [];
-            $targetType=$fieldValue["type"];
-            $fieldResult["resolve"]=function ($obj,$args=[]) use ($connectorType,$connectorConfig,$multivalued,$relation,$connectorMethod,$customPrePipeline,$customPostPipeline,$pipelineParams,$targetType){
-                foreach($relation as $relKey=>$relValue){
-                    $args[$relKey]=$obj[$relValue];
+            $relation = isset($fieldValue['relation']) && is_array($fieldValue['relation']) ? $fieldValue['relation'] : [];
+            $connectorMethod = !empty($fieldValue['methodName']) ? $fieldValue['methodName'] : null;
+            $customPrePipeline = !empty($fieldValue['prePipeline']) ? $fieldValue['prePipeline'] : null;
+            $customPostPipeline = !empty($fieldValue['postPipeline']) ? $fieldValue['postPipeline'] : null;
+            $pipelineParams = !empty($fieldValue['pipelineParams']) ? $fieldValue['pipelineParams'] : [];
+            $targetType = $fieldValue['type'];
+            $fieldResult['resolve'] = function ($obj, $args = []) use ($connectorType, $connectorConfig, $multivalued, $relation, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $targetType) {
+                foreach ($relation as $relKey => $relValue) {
+                    $args[$relKey] = $obj[$relValue];
                 }
-                if (isset($obj["currentRequestString"])){
-                    $pipelineParams["parentRequestString"]=$obj["currentRequestString"];
+                if (isset($obj['$this->_client'])) {
+                    $pipelineParams['parentRequestString'] = $obj['currentRequestString'];
                 }
-                return $this->runConnectorResolve($connectorType,[
-                    "configs"=>$connectorConfig,
-                    "args"=>$args,
-                    "multivalued"=>$multivalued,
-                    "methodName"=>$connectorMethod,
-                    "pipelineParams"=>$pipelineParams
-                ],$customPrePipeline,$customPostPipeline,$targetType);
-            };
 
+                return $this->runConnectorResolve($connectorType, [
+                    'configs' => $connectorConfig,
+                    'args' => $args,
+                    'multivalued' => $multivalued,
+                    'methodName' => $connectorMethod,
+                    'pipelineParams' => $pipelineParams,
+                ], $customPrePipeline, $customPostPipeline, $targetType);
+            };
         }
+
         return $fieldResult;
     }
 
     /**
-     * Add option args to multivalued request fields
+     * Add option args to multivalued request fields.
      *
      * @param array $args
      */
-    protected function addOptionArgs(&$args){
-        $args["start"]=[
-            "type"=>Type::int()
+    protected function addOptionArgs(&$args)
+    {
+        $args['start'] = [
+            'type' => Type::int(),
         ];
-        $args["limit"]=[
-            "type"=>Type::int()
+        $args['limit'] = [
+            'type' => Type::int(),
         ];
-        $args["orderBy"]=[
-            "type"=>Type::string()
+        $args['orderBy'] = [
+            'type' => Type::string(),
         ];
-        $args["orderByDirection"]=[
-            "type"=>Type::string()
+        $args['orderByDirection'] = [
+            'type' => Type::string(),
         ];
     }
 
     /**
-     * Initialize GraphQL Schema
-     *
+     * Initialize GraphQL Schema.
      */
-    protected function initSchema(){
-
-        foreach($this->alambicTypeDefs as $key=>$value){
-            $this->loadAlambicType($key,$value);
+    protected function initSchema()
+    {
+        foreach ($this->alambicTypeDefs as $key => $value) {
+            $this->loadAlambicType($key, $value);
         }
 
         $queryType = new ObjectType([
             'name' => 'Query',
-            'fields' => $this->alambicQueryFields
+            'fields' => $this->alambicQueryFields,
         ]);
 
         $mutationType = new ObjectType([
             'name' => 'Mutation',
-            'fields' => $this->alambicMutationFields
+            'fields' => $this->alambicMutationFields,
         ]);
 
-        $this->schema = new Schema($queryType,$mutationType);
+        $this->schema = new Schema($queryType, $mutationType);
     }
 
     /**
-     * Process read operation using connector pipeline
+     * Process read operation using connector pipeline.
      *
-     * @param string $connectorType
-     * @param array $payload
+     * @param string     $connectorType
+     * @param array      $payload
      * @param array|null $customPrePipeline
      * @param array|null $customPostPipeline
-     * @param string $targetType
+     * @param string     $targetType
+     *
      * @return array
      */
-    protected function runConnectorResolve($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null,$targetType=""){
-        $payload["isResolve"]=true;
-        $payload["isMutation"]=false;
-        $multivalued=isset($payload["multivalued"]) ? $payload["multivalued"] : false;
-        $currentRequestString=$targetType;
-        if(!empty($payload["args"])){
-            $currentRequestString=$currentRequestString."/".json_encode($payload["args"]);
+    protected function runConnectorResolve($connectorType, $payload, $customPrePipeline = null, $customPostPipeline = null, $targetType = '')
+    {
+        $payload['isResolve'] = true;
+        $payload['isMutation'] = false;
+        $multivalued = isset($payload['multivalued']) ? $payload['multivalued'] : false;
+        $currentRequestString = $targetType;
+        if (!empty($payload['args'])) {
+            $currentRequestString = $currentRequestString.'/'.json_encode($payload['args']);
         }
-        if($multivalued){
-            $currentRequestString=$currentRequestString."/multivalued";
+        if ($multivalued) {
+            $currentRequestString = $currentRequestString.'/multivalued';
         }
-        $payload["pipelineParams"]["currentRequestString"]=$currentRequestString;
-        if($multivalued&&!empty($payload["args"])){
-            foreach($payload["args"] as $argKey=>$argValue){
-                if(in_array($argKey,$this->optionArgs)){
-                    $payload["pipelineParams"][$argKey]=$argValue;
-                    unset($payload["args"][$argKey]);
+        $payload['pipelineParams']['currentRequestString'] = $currentRequestString;
+        if ($multivalued && !empty($payload['args'])) {
+            foreach ($payload['args'] as $argKey => $argValue) {
+                if (in_array($argKey, $this->optionArgs)) {
+                    $payload['pipelineParams'][$argKey] = $argValue;
+                    unset($payload['args'][$argKey]);
                 }
             }
         }
-        $result= $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
-        if(!empty($result)){
-            if($multivalued){
-                foreach($result as &$dataItem){
-                    $dataItem["currentRequestString"]=$currentRequestString;
+        $result = $this->runConnectorPipeline($connectorType, $payload, $customPrePipeline, $customPostPipeline);
+        if (!empty($result)) {
+            if ($multivalued) {
+                foreach ($result as &$dataItem) {
+                    $dataItem['currentRequestString'] = $currentRequestString;
                 }
             } else {
-                $result["currentRequestString"]=$currentRequestString;
+                $result['currentRequestString'] = $currentRequestString;
             }
         }
+
         return $result;
     }
 
     /**
-     * Process write operation using connector pipeline
+     * Process write operation using connector pipeline.
      *
-     * @param string $connectorType
-     * @param array $payload
+     * @param string     $connectorType
+     * @param array      $payload
      * @param array|null $customPrePipeline
      * @param array|null $customPostPipeline
+     *
      * @return array
      */
-    protected function runConnectorExecute($connectorType,$payload, $customPrePipeline = null,$customPostPipeline = null,$targetType=""){
-        $payload["isResolve"]=false;
-        $payload["isMutation"]=true;
-        $payload["type"]=$targetType;
-        $result = $this->runConnectorPipeline($connectorType,$payload,$customPrePipeline,$customPostPipeline);
-        $result["type"]=$targetType;
+    protected function runConnectorExecute($connectorType, $payload, $customPrePipeline = null, $customPostPipeline = null, $targetType = '')
+    {
+        $payload['isResolve'] = false;
+        $payload['isMutation'] = true;
+        $payload['type'] = $targetType;
+        $result = $this->runConnectorPipeline($connectorType, $payload, $customPrePipeline, $customPostPipeline);
+        $result['type'] = $targetType;
+
         return $result;
     }
 
     /**
      * Process operations using connector pipeline. Handles pipeline building, cache and params.
      *
-     * @param string $connectorType
-     * @param array $payload
+     * @param string     $connectorType
+     * @param array      $payload
      * @param array|null $customPrePipeline
      * @param array|null $customPostPipeline
+     *
      * @throws Exception
+     *
      * @return array
      */
-    protected function runConnectorPipeline($connectorType,$payload,$customPrePipeline = null,$customPostPipeline = null){
-        if(!isset($this->alambicConnectors[$connectorType])){
-            throw new Exception("Undefined connector : ".$connectorType);
+    protected function runConnectorPipeline($connectorType, $payload, $customPrePipeline = null, $customPostPipeline = null)
+    {
+        if (!isset($this->alambicConnectors[$connectorType])) {
+            throw new Exception('Undefined connector : '.$connectorType);
         }
-        if(empty($payload["pipelineParams"])){
-            $payload["pipelineParams"]=[];
+        if (empty($payload['pipelineParams'])) {
+            $payload['pipelineParams'] = [];
         }
-        $payload["connectorBaseConfig"]=$this->alambicConnectors[$connectorType];
-        $payload["pipelineParams"]=array_merge($payload["pipelineParams"],$this->sharedPipelineContext);
-        $prePipeline=!empty($this->alambicConnectors[$connectorType]["prePipeline"])&&is_array($this->alambicConnectors[$connectorType]["prePipeline"]) ? $this->alambicConnectors[$connectorType]["prePipeline"] : [];
-        $postPipeline=!empty($this->alambicConnectors[$connectorType]["postPipeline"])&&is_array($this->alambicConnectors[$connectorType]["postPipeline"]) ? $this->alambicConnectors[$connectorType]["postPipeline"] : [];
-        if ($customPrePipeline&&is_array($customPrePipeline)){
-            $prePipeline=$customPrePipeline;
+        $payload['connectorBaseConfig'] = $this->alambicConnectors[$connectorType];
+        $payload['pipelineParams'] = array_merge($payload['pipelineParams'], $this->sharedPipelineContext);
+        $prePipeline = !empty($this->alambicConnectors[$connectorType]['prePipeline']) && is_array($this->alambicConnectors[$connectorType]['prePipeline']) ? $this->alambicConnectors[$connectorType]['prePipeline'] : [];
+        $postPipeline = !empty($this->alambicConnectors[$connectorType]['postPipeline']) && is_array($this->alambicConnectors[$connectorType]['postPipeline']) ? $this->alambicConnectors[$connectorType]['postPipeline'] : [];
+        if ($customPrePipeline && is_array($customPrePipeline)) {
+            $prePipeline = $customPrePipeline;
         }
-        if ($customPostPipeline&&is_array($customPostPipeline)){
-            $postPipeline=$customPostPipeline;
+        if ($customPostPipeline && is_array($customPostPipeline)) {
+            $postPipeline = $customPostPipeline;
         }
-        $finalPipeline=array_merge($prePipeline,[$this->alambicConnectors[$connectorType]["connectorClass"]],$postPipeline);
-        $pipeLineKey=implode("-",$finalPipeline);
-        if(!array_key_exists($pipeLineKey,$this->pipelines)){
-            $pipelineBuilder = (new PipelineBuilder);
-            foreach($finalPipeline as $stage){
-                $pipelineBuilder->add(new $stage);
+        $finalPipeline = array_merge($prePipeline, [$this->alambicConnectors[$connectorType]['connectorClass']], $postPipeline);
+        $pipeLineKey = implode('-', $finalPipeline);
+        if (!array_key_exists($pipeLineKey, $this->pipelines)) {
+            $pipelineBuilder = (new PipelineBuilder());
+            foreach ($finalPipeline as $stage) {
+                $pipelineBuilder->add(new $stage());
             }
-            $this->pipelines[$pipeLineKey]=$pipelineBuilder->build();
+            $this->pipelines[$pipeLineKey] = $pipelineBuilder->build();
         }
-        return $this->pipelines[$pipeLineKey]->process($payload)["response"];
+
+        return $this->pipelines[$pipeLineKey]->process($payload)['response'];
     }
 }
