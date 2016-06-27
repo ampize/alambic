@@ -392,7 +392,7 @@ class Alambic
                 foreach ($relation as $relKey => $relValue) {
                     $args[$relKey] = $obj[$relValue];
                 }
-                if (isset($obj['$this->_client'])) {
+                if (isset($obj['currentRequestString'])) {
                     $pipelineParams['parentRequestString'] = $obj['currentRequestString'];
                 }
 
