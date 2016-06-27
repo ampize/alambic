@@ -85,6 +85,14 @@ class Alambic
     protected $schema = null;
 
     /**
+     * Current main request string.
+     *
+     * @var String
+     */
+    protected $mainRequestString = "";
+
+
+    /**
      * Construct request-ready Alambic using config array.
      *
      * @param array $config
@@ -136,6 +144,7 @@ class Alambic
      */
     public function execute($requestString = null, $variableValues = null, $operationName = null)
     {
+        $this->mainRequestString=$requestString;
         try {
             $result = GraphQL::execute(
                 $this->schema,
@@ -241,6 +250,7 @@ class Alambic
                         $customPostPipeline = !empty($type['singleEndpoint']['postPipeline']) ? $type['singleEndpoint']['postPipeline'] : null;
                         $pipelineParams = !empty($type['singleEndpoint']['pipelineParams']) ? $type['singleEndpoint']['pipelineParams'] : [];
                         $queryArray['resolve'] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
+                            $pipelineParams['parentRequestString'] = $this->mainRequestString;
                             return $this->runConnectorResolve($connectorType, [
                                 'configs' => $connectorConfig,
                                 'args' => $args,
@@ -274,6 +284,7 @@ class Alambic
                         }
                         $this->addOptionArgs($queryArray['args']);
                         $queryArray['resolve'] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
+                            $pipelineParams['parentRequestString'] = $this->mainRequestString;
                             return $this->runConnectorResolve($connectorType, [
                                 'configs' => $connectorConfig,
                                 'args' => $args,
