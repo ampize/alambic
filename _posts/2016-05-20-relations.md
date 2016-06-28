@@ -18,10 +18,10 @@ Fortunately it's a pretty easy task to handle with Alambic.
 
 You can define the following relations between object types:
 
-* One to One, aka "has one"
-* One to Many, aka "has many"
-* EmbedsOne
-* EmbedsMany
+* One to One
+* One to Many
+* Many to Many
+* Embedded types
 
 ## One to One
 
@@ -29,11 +29,15 @@ A one to one relation between object type A and object type B defines that every
 
 The declaring type (Post) has a foreign key property (authorId) that references the primary key (id) of the target type (Author).
 
+![One to one relation](/img/hasOne.png)
+
 ~~~json
 {
   "Post": {
     "fields": {
-      "Author": {
+      "id": {...},
+      "text": {...},
+      "author": {
         "type": "Author",
         "relation": {
           "id": "authorId"
@@ -44,7 +48,7 @@ The declaring type (Post) has a foreign key property (authorId) that references 
 }
 ~~~
 
-The relation is always built as a "key:value" expression where the key is target type key name and the value is the declaring type key name.
+The relation is always built as a "key:value" expression where the key is the target type key name and the value is the declaring type key name.
 
 ## One to many
 
@@ -52,13 +56,17 @@ A one to many relation between object type A and object type B defines that ever
 
 The target type (Post) has a foreign key property that references the primary key of the declaring type (Author).
 
+![One to many relation](/img/hasMany.png)
+
 The only difference between one-to-one and one-to-many declarations is that the "multivalued" option is set to true for one-to-many.
 
 ~~~json
 {
   "Author": {
     "fields": {
-      "Posts": {
+      "id": {...},
+      "name": {...},
+      "posts": {
         "type": "Post",
         "multivalued": true,
         "relation": {
@@ -70,6 +78,128 @@ The only difference between one-to-one and one-to-many declarations is that the 
 }
 ~~~
 
-## Embed One
+## Many to Many
 
-## Embeds Many
+A many to many relation between two object types can be established through a third type.
+
+For example Author and Blog can share many posts.
+
+![One to many relation](/img/manyToMany.png)
+
+~~~json
+{
+  "Post": {
+    "fields": {
+      "id": {...},
+      "text": {...},
+      "Author": {
+        "type": "Author",
+        "relation": {
+          "id": "authorId"
+        }    
+      },
+      "Blog": {
+        "type": "Blog",
+        "relation": {
+          "id": "blogId"
+        }    
+      }      
+    }
+  }
+}
+~~~
+
+Once configured, querying related models is straight forward:
+
+>Author > Post > Blog
+
+~~~code
+{
+  author {
+    name
+    posts {
+      text
+      blog {
+        title
+      }  
+    }
+  }
+}
+~~~
+
+>Blog > Post > Author
+
+~~~code
+
+  blog {
+    title
+    posts {
+      text
+      author {
+        name
+      }
+    }
+  }
+}
+~~~
+
+>Blog < Post > Author
+
+~~~code
+
+  post {
+    text
+    author {
+      name
+    }
+    blog {
+      title
+    }
+  }
+}
+~~~
+
+## Embedded types
+Embedded relations are used to represent a type that embeds another type.
+
+For example a post embeds one or many comments.
+
+~~~json
+{
+  "id": 1,
+  "text": "My first blog post on alambic",
+  "comments": [
+      {"author": "John Doe", "text": "Awesome!"},
+      {"author": "Jane Doe", "text": "Very useful"}
+  ]
+}
+~~~
+
+In Alambic every foreign field type declared without the "relation" property is considered as embedded.
+
+~~~json
+{
+  "Comment": {
+    "fields": {
+      "author": {...},
+      "text": {...}
+    }
+  }
+}
+~~~
+
+~~~json
+{
+  "Post": {
+    "fields": {
+      "id": {...},
+      "text": {...},
+      "comments": {
+        "type": "Comment",
+        "multivalued": true
+        ** no relation **
+      }
+    }
+  }
+}
+~~~
