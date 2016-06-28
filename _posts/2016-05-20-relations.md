@@ -29,7 +29,7 @@ A one to one relation between object type A and object type B defines that every
 
 The declaring type (Post) has a foreign key property (authorId) that references the primary key (id) of the target type (Author).
 
-![One to one relation](/img/hasOne.png)
+![One to one relation](../img/hasOne.png)
 
 ~~~json
 {
@@ -56,7 +56,7 @@ A one to many relation between object type A and object type B defines that ever
 
 The target type (Post) has a foreign key property that references the primary key of the declaring type (Author).
 
-![One to many relation](/img/hasMany.png)
+![One to many relation](../img/hasMany.png)
 
 The only difference between one-to-one and one-to-many declarations is that the "multivalued" option is set to true for one-to-many.
 
@@ -84,7 +84,7 @@ A many to many relation between two object types can be established through a th
 
 For example Author and Blog can share many posts.
 
-![One to many relation](/img/manyToMany.png)
+![One to many relation](../img/manyToMany.png)
 
 ~~~json
 {
