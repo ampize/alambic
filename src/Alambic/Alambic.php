@@ -236,9 +236,12 @@ class Alambic
                     $queryArray = [
                         'type' => $this->alambicTypes[$typeName],
                     ];
-                    if (!empty($type['singleEndpoint']['args']) && is_array($type['singleEndpoint']['args'])) {
+                    $argOverrides=!empty($type['singleEndpoint']['args']) && is_array($type['singleEndpoint']['args']) ? $type['singleEndpoint']['args'] : [];
+                    $excludedArgs=!empty($type['singleEndpoint']['excludedArgs']) && is_array($type['singleEndpoint']['excludedArgs']) ? $type['singleEndpoint']['excludedArgs'] : [];
+                    $argsDefinition=$this->deduceEndpointArgs($type['fields'],$argOverrides,$excludedArgs,false);
+                    if (count($argsDefinition)>0) {
                         $queryArray['args'] = [];
-                        foreach ($type['singleEndpoint']['args'] as $sargFieldKey => $sargFieldValue) {
+                        foreach ($argsDefinition as $sargFieldKey => $sargFieldValue) {
                             $queryArray['args'][$sargFieldKey] = $this->buildField($sargFieldKey, $sargFieldValue);
                         }
                     }
@@ -249,6 +252,7 @@ class Alambic
                         $customPrePipeline = !empty($type['singleEndpoint']['prePipeline']) ? $type['singleEndpoint']['prePipeline'] : null;
                         $customPostPipeline = !empty($type['singleEndpoint']['postPipeline']) ? $type['singleEndpoint']['postPipeline'] : null;
                         $pipelineParams = !empty($type['singleEndpoint']['pipelineParams']) ? $type['singleEndpoint']['pipelineParams'] : [];
+                        $pipelineParams["argsDefinition"]=$argsDefinition;
                         $queryArray['resolve'] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
                             $pipelineParams['parentRequestString'] = $this->mainRequestString;
                             return $this->runConnectorResolve($connectorType, [
@@ -266,9 +270,12 @@ class Alambic
                     $queryArray = [
                         'type' => Type::listOf($this->alambicTypes[$typeName]),
                     ];
-                    if (!empty($type['multiEndpoint']['args']) && is_array($type['multiEndpoint']['args'])) {
+                    $argOverrides=!empty($type['multiEndpoint']['args']) && is_array($type['multiEndpoint']['args']) ? $type['multiEndpoint']['args'] : [];
+                    $excludedArgs=!empty($type['multiEndpoint']['excludedArgs']) && is_array($type['multiEndpoint']['excludedArgs']) ? $type['multiEndpoint']['excludedArgs'] : [];
+                    $argsDefinition=$this->deduceEndpointArgs($type['fields'],$argOverrides,$excludedArgs,false);
+                    if (count($argsDefinition)>0) {
                         $queryArray['args'] = [];
-                        foreach ($type['multiEndpoint']['args'] as $margFieldKey => $margFieldValue) {
+                        foreach ($argsDefinition as $margFieldKey => $margFieldValue) {
                             $queryArray['args'][$margFieldKey] = $this->buildField($margFieldKey, $margFieldValue);
                         }
                     }
@@ -279,6 +286,7 @@ class Alambic
                         $customPrePipeline = !empty($type['multiEndpoint']['prePipeline']) ? $type['multiEndpoint']['prePipeline'] : null;
                         $customPostPipeline = !empty($type['multiEndpoint']['postPipeline']) ? $type['multiEndpoint']['postPipeline'] : null;
                         $pipelineParams = !empty($type['multiEndpoint']['pipelineParams']) ? $type['multiEndpoint']['pipelineParams'] : [];
+                        $pipelineParams["argsDefinition"]=$argsDefinition;
                         if (empty($queryArray['args'])) {
                             $queryArray['args'] = [];
                         }
@@ -312,7 +320,10 @@ class Alambic
                             'type' => $mutationResultType,
                             'args' => [],
                         ];
-                        foreach ($mutationValue['args'] as $mutargFieldKey => $mutargFieldValue) {
+                        $argOverrides=!empty($mutationValue['args']) && is_array($mutationValue['args']) ? $mutationValue['args'] : [];
+                        $excludedArgs=!empty($mutationValue['excludedArgs']) && is_array($mutationValue['excludedArgs']) ? $mutationValue['excludedArgs'] : [];
+                        $argsDefinition=$this->deduceEndpointArgs($type['fields'],$argOverrides,$excludedArgs,true);
+                        foreach ($argsDefinition as $mutargFieldKey => $mutargFieldValue) {
                             $mutationArray['args'][$mutargFieldKey] = $this->buildField($mutargFieldKey, $mutargFieldValue);
                         }
 
@@ -322,7 +333,8 @@ class Alambic
                             $connectorType = $type['connector']['type'];
                             $customPrePipeline = !empty($mutationValue['prePipeline']) ? $mutationValue['prePipeline'] : null;
                             $customPostPipeline = !empty($mutationValue['postPipeline']) ? $mutationValue['postPipeline'] : null;
-                            $pipelineParams = !empty($mutationValue['pipelineParams']) ? $mutationValue['pipelineParams'] : null;
+                            $pipelineParams = !empty($mutationValue['pipelineParams']) ? $mutationValue['pipelineParams'] : [];
+                            $pipelineParams["argsDefinition"]=$argsDefinition;
                             $mutationArray['resolve'] = function ($root, $args) use ($connectorType, $connectorConfig, $connectorMethod, $customPrePipeline, $customPostPipeline, $pipelineParams, $typeName) {
                                 return $this->runConnectorExecute($connectorType, [
                                     'configs' => $connectorConfig,
@@ -339,6 +351,31 @@ class Alambic
         }
     }
 
+    /**
+     * Deduce endpoint args from type field definition and endpoint properties
+     *
+     * @param array $typeArgs
+     * @param array $argOverrides
+     * @param array $excludedArgs
+     * @param boolean  $isMutation
+     *
+     * @return array
+     */
+    protected function deduceEndpointArgs($typeArgs, $argOverrides=[], $excludedArgs=[], $isMutation=false)
+    {
+        $endpointArgs=[];
+        foreach($typeArgs as $argKey=>$argValue){
+            if(isset($argOverrides[$argKey])){
+                $endpointArgs[$argKey]=$argOverrides[$argKey];
+            } elseif (!in_array($argKey,$excludedArgs)&&!($isMutation&&isset($argValue["readOnly"])&&$argValue["readOnly"])){
+                if(!$isMutation){
+                    $argValue["required"]=false;
+                }
+                $endpointArgs[$argKey]=$argValue;
+            }
+        }
+        return $endpointArgs;
+    }
     /**
      * Create valid GraphQL field using field key and definition array.
      *
