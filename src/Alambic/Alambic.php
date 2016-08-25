@@ -280,7 +280,7 @@ class Alambic
                         }
                     }
                     if (!empty($type['connector']) && is_array($type['connector'])) {
-                        $connectorConfig = $type['connector']['configs'];
+                        $connectorConfig = !empty($type['connector']['configs']) ? $type['connector']['configs'] : [];
                         $connectorType = $type['connector']['type'];
                         $connectorMethod = !empty($type['multiEndpoint']['methodName']) ? $type['multiEndpoint']['methodName'] : null;
                         $customPrePipeline = !empty($type['multiEndpoint']['prePipeline']) ? $type['multiEndpoint']['prePipeline'] : null;
