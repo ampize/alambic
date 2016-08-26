@@ -246,7 +246,7 @@ class Alambic
                         }
                     }
                     if (!empty($type['connector']) && is_array($type['connector'])) {
-                        $connectorConfig = $type['connector']['configs'];
+                        $connectorConfig = !empty($type['connector']['configs']) ? $type['connector']['configs'] : [];
                         $connectorType = $type['connector']['type'];
                         $connectorMethod = !empty($type['singleEndpoint']['methodName']) ? $type['singleEndpoint']['methodName'] : null;
                         $customPrePipeline = !empty($type['singleEndpoint']['prePipeline']) ? $type['singleEndpoint']['prePipeline'] : null;
@@ -328,7 +328,7 @@ class Alambic
                         }
 
                         if (!empty($type['connector']) && is_array($type['connector'])) {
-                            $connectorConfig = $type['connector']['configs'];
+                            $connectorConfig = !empty($type['connector']['configs']) ? $type['connector']['configs'] : [];
                             $connectorMethod = $mutationValue['methodName'];
                             $connectorType = $type['connector']['type'];
                             $customPrePipeline = !empty($mutationValue['prePipeline']) ? $mutationValue['prePipeline'] : null;
@@ -410,7 +410,7 @@ class Alambic
             }
         }
         if (isset($this->alambicTypeDefs[$fieldValue['type']], $this->alambicTypeDefs[$fieldValue['type']]['connector'])) {
-            $connectorConfig = $this->alambicTypeDefs[$fieldValue['type']]['connector']['configs'];
+            $connectorConfig = !empty($this->alambicTypeDefs[$fieldValue['type']]['connector']['configs']) ? $this->alambicTypeDefs[$fieldValue['type']]['connector']['configs'] : [];;
             $connectorType = $this->alambicTypeDefs[$fieldValue['type']]['connector']['type'];
             $multivalued = isset($fieldValue['multivalued']) && $fieldValue['multivalued'];
             if ($multivalued) {
