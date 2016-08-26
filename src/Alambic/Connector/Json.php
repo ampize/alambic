@@ -33,18 +33,31 @@ class Json
         $multivalued=isset($payload["multivalued"]) ? $payload["multivalued"] : false;
         $args=isset($payload["args"]) ? $payload["args"] : [];
         $result=[];
-        foreach($jsonArray as $record){
-            $recordMatches=true;
-            foreach($args as $argKey=>$argValue){
-                if($recordMatches&&(!isset($record[$argKey])||$record[$argKey]!=$argValue)){
-                    $recordMatches=false;
+        $start = !empty($payload['pipelineParams']['start']) ? $payload['pipelineParams']['start'] : 0;
+        $limit = !empty($payload['pipelineParams']['limit']) ? $payload['pipelineParams']['limit'] : count($jsonArray);
+        $sort=null;
+        if (!empty($payload['pipelineParams']['orderBy'])) {
+            $direction = !empty($payload['pipelineParams']['orderByDirection']) && ($payload['pipelineParams']['orderByDirection'] == 'desc') ? -1 : 1;
+            $sort=$payload['pipelineParams']['orderBy'];
+        }
+        if($sort){
+            usort($array, $this->build_sorter($sort,$direction));
+        }
+        $indexLimit=$start+$limit-1;
+        foreach($jsonArray as $index=>$record){
+            if(($index>=$start)&&($index<=$indexLimit)){
+                $recordMatches=true;
+                foreach($args as $argKey=>$argValue){
+                    if($recordMatches&&(!isset($record[$argKey])||$record[$argKey]!=$argValue)){
+                        $recordMatches=false;
+                    }
                 }
-            }
-            if ($recordMatches&&!$multivalued){
-                $payload["response"]=$record;
-                return $payload;
-            } elseif($recordMatches&&$multivalued){
-                $result[]=$record;
+                if ($recordMatches&&!$multivalued){
+                    $payload["response"]=$record;
+                    return $payload;
+                } elseif($recordMatches&&$multivalued){
+                    $result[]=$record;
+                }
             }
         }
         $payload["response"]=$result;
@@ -85,6 +98,26 @@ class Json
         file_put_contents($filePath,json_encode($jsonArray));
         $payload["response"]=$result;
         return $payload;
+    }
+
+    protected function build_sorter($key,$order) {
+        return function ($a, $b) use ($key,$order) {
+            if(!isset($a[$key])&&!isset($b[$key])){
+                return 0;
+            } elseif (!isset($a[$key])){
+                return -1*$order;
+            } elseif (!isset($b[$key])){
+                return $order;
+            } elseif ($a[$key] == $b[$key]){
+                return 0;
+            } elseif (is_string($a[$key])&&is_string($b[$key])) {
+                return $order*strnatcmp($a[$key], $b[$key]);
+            } else {
+                $res=($a[$key] < $b[$key]) ? -1 : 1;
+                return $res*$order;
+            }
+
+        };
     }
 
 }
