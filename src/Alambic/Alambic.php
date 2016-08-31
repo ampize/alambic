@@ -273,6 +273,7 @@ class Alambic
                     $argOverrides=!empty($type['multiEndpoint']['args']) && is_array($type['multiEndpoint']['args']) ? $type['multiEndpoint']['args'] : [];
                     $excludedArgs=!empty($type['multiEndpoint']['excludedArgs']) && is_array($type['multiEndpoint']['excludedArgs']) ? $type['multiEndpoint']['excludedArgs'] : [];
                     $argsDefinition=$this->deduceEndpointArgs($type['fields'],$argOverrides,$excludedArgs,false);
+
                     if (count($argsDefinition)>0) {
                         $queryArray['args'] = [];
                         foreach ($argsDefinition as $margFieldKey => $margFieldValue) {
@@ -374,6 +375,7 @@ class Alambic
                 $endpointArgs[$argKey]=$argValue;
             }
         }
+        $endpointArgs=array_merge($endpointArgs,$argOverrides);
         return $endpointArgs;
     }
     /**
