@@ -7,6 +7,7 @@ use Exception;
 use GraphQL\Schema;
 use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 use League\Pipeline\PipelineBuilder;
 
@@ -32,6 +33,13 @@ class Alambic
      * @var ObjectType[]
      */
     protected $alambicTypes = [];
+
+    /**
+     * Input Alambic types.
+     *
+     * @var ObjectType[]
+     */
+    protected $inputAlambicTypes = [];
 
     /**
      * Alambic query fields.
@@ -197,6 +205,14 @@ class Alambic
             'Boolean' => Type::boolean(),
             'ID' => Type::id(),
         ];
+
+        $this->inputAlambicTypes = [
+            'String' => Type::string(),
+            'Int' => Type::int(),
+            'Float' => Type::float(),
+            'Boolean' => Type::boolean(),
+            'ID' => Type::id(),
+        ];
     }
 
     /**
@@ -242,7 +258,7 @@ class Alambic
                     if (count($argsDefinition)>0) {
                         $queryArray['args'] = [];
                         foreach ($argsDefinition as $sargFieldKey => $sargFieldValue) {
-                            $queryArray['args'][$sargFieldKey] = $this->buildField($sargFieldKey, $sargFieldValue);
+                            $queryArray['args'][$sargFieldKey] = $this->buildInputField($sargFieldKey, $sargFieldValue);
                         }
                     }
                     if (!empty($type['connector']) && is_array($type['connector'])) {
@@ -277,7 +293,7 @@ class Alambic
                     if (count($argsDefinition)>0) {
                         $queryArray['args'] = [];
                         foreach ($argsDefinition as $margFieldKey => $margFieldValue) {
-                            $queryArray['args'][$margFieldKey] = $this->buildField($margFieldKey, $margFieldValue);
+                            $queryArray['args'][$margFieldKey] = $this->buildInputField($margFieldKey, $margFieldValue);
                         }
                     }
                     if (!empty($type['connector']) && is_array($type['connector'])) {
@@ -325,7 +341,7 @@ class Alambic
                         $excludedArgs=!empty($mutationValue['excludedArgs']) && is_array($mutationValue['excludedArgs']) ? $mutationValue['excludedArgs'] : [];
                         $argsDefinition=$this->deduceEndpointArgs($type['fields'],$argOverrides,$excludedArgs,true);
                         foreach ($argsDefinition as $mutargFieldKey => $mutargFieldValue) {
-                            $mutationArray['args'][$mutargFieldKey] = $this->buildField($mutargFieldKey, $mutargFieldValue);
+                            $mutationArray['args'][$mutargFieldKey] = $this->buildInputField($mutargFieldKey, $mutargFieldValue);
                         }
 
                         if (!empty($type['connector']) && is_array($type['connector'])) {
@@ -349,6 +365,44 @@ class Alambic
                     }
                 }
             }
+        }
+    }
+
+
+    /**
+     * Create Alambic input type using name and Alambic type definition.
+     *
+     * @param string $typeName
+     * @param array  $type
+     */
+    protected function loadInputAlambicType($typeName, $type)
+    {
+        if (isset($this->inputAlambicTypes[$typeName])) {
+            return;
+        }
+        if (isset($type['modelType']) && $type['modelType'] == 'Enum') {
+            $typeArray = [
+                'name' => "Input_".$type['name'],
+                'values' => $type['values'],
+            ];
+            if (!empty($type['description'])) {
+                $typeArray['description'] = $type['description'];
+            }
+            $this->inputAlambicTypes[$typeName] = new EnumType($typeArray);
+        } else {
+            $typeArray = [
+                'name' => "Input_".$type['name'],
+                'fields' => [],
+            ];
+            if (!empty($type['description'])) {
+                $typeArray['description'] = $type['description'];
+            }
+            foreach ($type['fields'] as $fieldKey => $fieldValue) {
+                $typeArray['fields'][$fieldKey] = $this->buildInputField($fieldKey, $fieldValue);
+            }
+            $this->inputAlambicTypes[$typeName] = new InputObjectType($typeArray);
+
+
         }
     }
 
@@ -443,6 +497,37 @@ class Alambic
                     'pipelineParams' => $pipelineParams,
                 ], $customPrePipeline, $customPostPipeline, $targetType);
             };
+        }
+
+        return $fieldResult;
+    }
+
+    /**
+     * Create valid GraphQL input field using field key and definition array.
+     *
+     * @param string $fieldKey
+     * @param array  $fieldValue
+     *
+     * @return array
+     */
+    protected function buildInputField($fieldKey, $fieldValue)
+    {
+        if (!isset($this->inputAlambicTypes[$fieldValue['type']]) && isset($this->alambicTypeDefs[$fieldValue['type']])) {
+            $this->loadInputAlambicType($fieldValue['type'], $this->alambicTypeDefs[$fieldValue['type']]);
+        }
+        $baseTypeResult = $this->inputAlambicTypes[$fieldValue['type']];
+
+        if (isset($fieldValue['multivalued']) && $fieldValue['multivalued']) {
+            $baseTypeResult = Type::listOf($baseTypeResult);
+        }
+        if (isset($fieldValue['required']) && $fieldValue['required']) {
+            $baseTypeResult = Type::nonNull($baseTypeResult);
+        }
+        $fieldResult = [
+            'type' => $baseTypeResult,
+        ];
+        if (!empty($fieldValue['description'])) {
+            $fieldResult['description'] = $fieldValue['description'];
         }
 
         return $fieldResult;
