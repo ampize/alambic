@@ -99,7 +99,19 @@ class Alambic
      */
     protected $mainRequestString = "";
 
-
+    /**
+     * Error messages for JSON decoding.
+     *
+     * @var array
+     */
+    protected $jsonErrorMessages = [
+        JSON_ERROR_NONE => 'No error has occurred',
+        JSON_ERROR_DEPTH => 'The maximum stack depth has been exceeded',
+        JSON_ERROR_STATE_MISMATCH => 'Invalid or malformed JSON',
+        JSON_ERROR_CTRL_CHAR => 'Control character error, possibly incorrectly encoded',
+        JSON_ERROR_SYNTAX => 'Syntax error',
+        JSON_ERROR_UTF8 => 'Malformed UTF-8 characters, possibly incorrectly encoded'
+    ];
     /**
      * Construct request-ready Alambic using config array.
      *
@@ -183,12 +195,18 @@ class Alambic
         foreach ($connectorFiles as $filePath) {
             $tempJson = file_get_contents($filePath);
             $jsonArray = json_decode($tempJson, true);
+            if(!$jsonArray){
+                throw new Exception("JSON decode error in file ".$filePath." : ".$this->jsonErrorMessages[json_last_error()]);
+            }
             $this->alambicConnectors = array_merge($this->alambicConnectors, $jsonArray);
         }
         $modelFiles = glob($path.'/models/*.json');
         foreach ($modelFiles as $filePath) {
             $tempJson = file_get_contents($filePath);
             $jsonArray = json_decode($tempJson, true);
+            if(!$jsonArray){
+                throw new Exception("JSON decode error in file ".$filePath." : ".$this->jsonErrorMessages[json_last_error()]);
+            }
             $this->alambicTypeDefs = array_merge($this->alambicTypeDefs, $jsonArray);
         }
     }
