@@ -529,6 +529,9 @@ class Alambic
         if (!empty($fieldValue['description'])) {
             $fieldResult['description'] = $fieldValue['description'];
         }
+        if (!empty($fieldValue['defaultValue'])) {
+            $fieldResult['defaultValue'] = $fieldValue['defaultValue'];
+        }
 
         return $fieldResult;
     }
