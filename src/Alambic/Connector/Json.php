@@ -4,7 +4,9 @@ namespace Alambic\Connector;
 
 
 
-use \Exception;
+use Alambic\Exception\ConnectorArgs;
+use Alambic\Exception\ConnectorConfig;
+use Alambic\Exception\ConnectorInternal;
 
 class Json
 {
@@ -17,11 +19,11 @@ class Json
         $configs=isset($payload["configs"]) ? $payload["configs"] : [];
         $baseConfig=isset($payload["connectorBaseConfig"]) ? $payload["connectorBaseConfig"] : [];
         if(empty($configs["fullPath"])&&(empty($configs["fileName"])||empty($baseConfig["basePath"]))){
-            throw new Exception('Insufficient configuration : unable to resolve to a file path');
+            throw new ConnectorConfig('Insufficient configuration : unable to resolve to a file path');
         }
         $filePath=!empty($configs["fullPath"]) ? $configs["fullPath"] : $baseConfig["basePath"].$configs["fileName"];
         if (!is_file($filePath)) {
-            throw new Exception('File not found');
+            throw new ConnectorInternal('File not found');
         }
         $tempJson = file_get_contents($filePath);
         $jsonArray=json_decode($tempJson,true);
@@ -68,10 +70,10 @@ class Json
         $args=isset($payload["args"]) ? $payload["args"] : [];
         $methodName=isset($payload["methodName"]) ? $payload["methodName"] : null;
         if(empty($methodName)){
-            throw new Exception('Json connector requires a valid methodName for write ops');
+            throw new ConnectorConfig('Json connector requires a valid methodName for write ops');
         }
         if(empty($args["id"])){
-            throw new Exception('Json connector id for write ops');
+            throw new ConnectorArgs('Json connector id for write ops');
         }
         $result=[];
         if($methodName=="create"){

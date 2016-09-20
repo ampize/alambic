@@ -10,7 +10,7 @@ use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 use League\Pipeline\PipelineBuilder;
-
+use Alambic\Exception\Config;
 /**
  * Main Alambic class.
  *
@@ -196,7 +196,7 @@ class Alambic
             $tempJson = file_get_contents($filePath);
             $jsonArray = json_decode($tempJson, true);
             if(!$jsonArray){
-                throw new Exception("JSON decode error in file ".$filePath." : ".$this->jsonErrorMessages[json_last_error()]);
+                throw new Config("JSON decode error in file ".$filePath." : ".$this->jsonErrorMessages[json_last_error()]);
             }
             $this->alambicConnectors = array_merge($this->alambicConnectors, $jsonArray);
         }
@@ -205,7 +205,7 @@ class Alambic
             $tempJson = file_get_contents($filePath);
             $jsonArray = json_decode($tempJson, true);
             if(!$jsonArray){
-                throw new Exception("JSON decode error in file ".$filePath." : ".$this->jsonErrorMessages[json_last_error()]);
+                throw new Config("JSON decode error in file ".$filePath." : ".$this->jsonErrorMessages[json_last_error()]);
             }
             $this->alambicTypeDefs = array_merge($this->alambicTypeDefs, $jsonArray);
         }
@@ -679,7 +679,7 @@ class Alambic
     protected function runConnectorPipeline($connectorType, $payload, $customPrePipeline = null, $customPostPipeline = null)
     {
         if (!isset($this->alambicConnectors[$connectorType])) {
-            throw new Exception('Undefined connector : '.$connectorType);
+            throw new Config('Undefined connector : '.$connectorType);
         }
         if (empty($payload['pipelineParams'])) {
             $payload['pipelineParams'] = [];
