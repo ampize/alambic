@@ -9,6 +9,7 @@ use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Definition\UnionType;
 use League\Pipeline\PipelineBuilder;
 use Alambic\Exception\Config;
 /**
@@ -253,6 +254,29 @@ class Alambic
                 $typeArray['description'] = $type['description'];
             }
             $this->alambicTypes[$typeName] = new EnumType($typeArray);
+        } elseif (isset($type['modelType']) && $type['modelType'] == 'Union') {
+            $typeArray = [
+                'name' => $type['name'],
+                'types' => [ ]
+            ];
+            if (!empty($type['description'])) {
+                $typeArray['description'] = $type['description'];
+            }
+            if(isset($type["types"])&&is_array($type["types"])){
+                foreach($type["types"] as $unionMember){
+                    if (!isset($this->alambicTypes[$unionMember]) && isset($this->alambicTypeDefs[$unionMember])) {
+                        $this->loadAlambicType($unionMember, $this->alambicTypeDefs[$unionMember]);
+                    }
+                    $typeArray["types"][]=$this->alambicTypes[$unionMember];
+                }
+            }
+            $typeArray['resolveType']=function ($value)  {
+                if(isset($value["type"])){
+                    return $this->alambicTypes[$value["type"]];
+                }
+            };
+
+            $this->alambicTypes[$typeName] = new UnionType($typeArray);
         } else {
             $typeArray = [
                 'name' => $type['name'],
@@ -438,6 +462,9 @@ class Alambic
     {
         $endpointArgs=[];
         foreach($typeArgs as $argKey=>$argValue){
+            if(!empty($this->alambicTypeDefs[$argValue["type"]]["modelType"])&&$this->alambicTypeDefs[$argValue["type"]]["modelType"]=="Union"){
+                continue;
+            }
             if(isset($argOverrides[$argKey])){
                 $endpointArgs[$argKey]=$argOverrides[$argKey];
             } elseif (!in_array($argKey,$excludedArgs)&&!($isMutation&&isset($argValue["readOnly"])&&$argValue["readOnly"])){
