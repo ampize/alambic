@@ -12,6 +12,11 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\UnionType;
 use League\Pipeline\PipelineBuilder;
 use Alambic\Exception\Config;
+use GraphQL\Utils;
+use GraphQL\Type\Definition\ListOfType;
+use GraphQL\Type\Definition\NonNull;
+use GraphQL\Type\Definition\ScalarType;
+
 /**
  * Main Alambic class.
  *
@@ -732,5 +737,74 @@ class Alambic
         }
 
         return $this->pipelines[$pipeLineKey]->process($payload)['response'];
+    }
+
+    /**
+     * Check if value is valid using GraphQL Type
+     *
+     * @param array      $value
+     * @param Type $type
+     *
+     * @return boolean
+     */
+    private function isValidValue($value, Type $type)
+    {
+        if ($type instanceof NonNull) {
+            if (null === $value) {
+                return false;
+            }
+            return $this->isValidValue($value, $type->getWrappedType());
+        }
+        if ($value === null) {
+            return true;
+        }
+        if ($type instanceof ListOfType) {
+            $itemType = $type->getWrappedType();
+            if (is_array($value)) {
+                foreach ($value as $item) {
+                    if (!$this->isValidValue($item, $itemType)) {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                return $this->isValidValue($value, $itemType);
+            }
+        }
+        if ($type instanceof InputObjectType) {
+            if (!is_array($value)) {
+                return false;
+            }
+            $fields = $type->getFields();
+            $fieldMap = [];
+            foreach ($fields as $fieldName => $field) {
+                if (!$this->isValidValue(isset($value[$fieldName]) ? $value[$fieldName] : null, $field->getType())) {
+                    return false;
+                }
+                $fieldMap[$field->name] = $field;
+            }
+            $diff = array_diff_key($value, $fieldMap);
+            if (!empty($diff)) {
+                return false;
+            }
+            return true;
+        }
+        Utils::invariant($type instanceof ScalarType || $type instanceof EnumType, 'Must be input type');
+        return null !== $type->parseValue($value);
+    }
+
+    /**
+     * Validates data against Alambic Type
+     *
+     * @param array $value
+     * @param string $typeName
+     *
+     * @return boolean
+     */
+    public function validateData($value,$typeName){
+        if (!isset($this->inputAlambicTypes[$typeName]) && isset($this->alambicTypeDefs[$typeName])) {
+            $this->loadInputAlambicType($typeName, $this->alambicTypeDefs[$typeName]);
+        }
+        return $this->isValidValue($value,$this->inputAlambicTypes[$typeName]);
     }
 }
