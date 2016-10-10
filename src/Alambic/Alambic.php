@@ -472,7 +472,7 @@ class Alambic
             }
             if(isset($argOverrides[$argKey])){
                 $endpointArgs[$argKey]=$argOverrides[$argKey];
-            } elseif (!in_array($argKey,$excludedArgs)&&!($isMutation&&isset($argValue["readOnly"])&&$argValue["readOnly"])){
+            } elseif (!in_array("all",$excludedArgs)&&!in_array($argKey,$excludedArgs)&&!($isMutation&&isset($argValue["readOnly"])&&$argValue["readOnly"])){
                 if(!$isMutation){
                     $argValue["required"]=false;
                 }
