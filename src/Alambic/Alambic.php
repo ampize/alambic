@@ -122,8 +122,9 @@ class Alambic
      * Construct request-ready Alambic using config array.
      *
      * @param array $config
+     * @param boolean $debug
      */
-    public function __construct($config)
+    public function __construct($config,$debug=false)
     {
         $this->initAlambicBaseTypes();
         if (is_string($config) && is_dir($config)) {
@@ -136,7 +137,7 @@ class Alambic
                 $this->alambicTypeDefs = $config['alambicTypeDefs'];
             }
         }
-        $this->initSchema();
+        $this->initSchema($debug);
     }
 
     /**
@@ -609,11 +610,20 @@ class Alambic
 
     /**
      * Initialize GraphQL Schema.
+     *
+     * @param boolean $debug
      */
-    protected function initSchema()
+    protected function initSchema($debug=false)
     {
         foreach ($this->alambicTypeDefs as $key => $value) {
-            $this->loadAlambicType($key, $value);
+            if($debug){
+                $this->loadAlambicType($key, $value);
+            } else {
+                try {
+                    $this->loadAlambicType($key, $value);
+                } catch (\Exception $e) {
+                }
+            }
         }
 
         $queryType = new ObjectType([
