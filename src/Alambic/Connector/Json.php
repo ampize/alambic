@@ -46,20 +46,24 @@ class Json
             usort($array, $this->build_sorter($sort,$direction));
         }
         $indexLimit=$start+$limit-1;
-        foreach($jsonArray as $index=>$record){
-            if(($index>=$start)&&($index<=$indexLimit)){
-                $recordMatches=true;
-                foreach($args as $argKey=>$argValue){
-                    if($recordMatches&&(!isset($record[$argKey])||$record[$argKey]!=$argValue)){
-                        $recordMatches=false;
-                    }
+        $index=0;
+        foreach($jsonArray as $record){
+            $recordMatches=true;
+            foreach($args as $argKey=>$argValue){
+                if($recordMatches&&(!isset($record[$argKey])||$record[$argKey]!=$argValue)){
+                    $recordMatches=false;
                 }
+            }
+            if(($index>=$start)&&($index<=$indexLimit)){
                 if ($recordMatches&&!$multivalued){
                     $payload["response"]=$record;
                     return $payload;
                 } elseif($recordMatches&&$multivalued){
                     $result[]=$record;
                 }
+            }
+            if($recordMatches){
+                $index=$index+1;
             }
         }
         $payload["response"]=$result;
