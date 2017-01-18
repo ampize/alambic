@@ -468,6 +468,9 @@ class Alambic
     {
         $endpointArgs=[];
         foreach($typeArgs as $argKey=>$argValue){
+            if(!$isMutation&&!in_array($argValue["type"],["String","Int","ID","Float","Boolean"])&&(empty($this->alambicTypeDefs[$argValue["type"]]["modelType"])||$this->alambicTypeDefs[$argValue["type"]]["modelType"]!="Enum")){
+                continue;
+            }
             if(!empty($this->alambicTypeDefs[$argValue["type"]]["modelType"])&&$this->alambicTypeDefs[$argValue["type"]]["modelType"]=="Union"){
                 continue;
             }
