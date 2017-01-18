@@ -493,10 +493,10 @@ class Alambic
      */
     protected function buildField($fieldKey, $fieldValue)
     {
-        if (!isset($this->alambicTypes[$fieldValue['type']]) && isset($this->alambicTypeDefs[$fieldValue['type']])) {
-            $this->loadAlambicType($fieldValue['type'], $this->alambicTypeDefs[$fieldValue['type']]);
-        }
-        $baseTypeResult = $this->alambicTypes[$fieldValue['type']];
+        $refToType = &$this->alambicTypes[$fieldValue['type']];
+        $baseTypeResult = function() use (&$refToType){
+            return $refToType;
+        };
 
         if (isset($fieldValue['multivalued']) && $fieldValue['multivalued']) {
             $baseTypeResult = Type::listOf($baseTypeResult);
