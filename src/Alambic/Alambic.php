@@ -286,13 +286,16 @@ class Alambic
         } else {
             $typeArray = [
                 'name' => $type['name'],
-                'fields' => [],
+                'fields'  => function() use ($type) {
+                    $fields = [];
+                    foreach ($type['fields'] as $fieldKey => $fieldValue) {
+                        $fields[$fieldKey] = $this->buildField($fieldKey, $fieldValue,true);
+                    }
+                    return $fields;
+                }
             ];
             if (!empty($type['description'])) {
                 $typeArray['description'] = $type['description'];
-            }
-            foreach ($type['fields'] as $fieldKey => $fieldValue) {
-                $typeArray['fields'][$fieldKey] = $this->buildField($fieldKey, $fieldValue);
             }
             $this->alambicTypes[$typeName] = new ObjectType($typeArray);
             if (isset($type['expose']) && $type['expose']) {
@@ -491,15 +494,16 @@ class Alambic
      *
      * @param string $fieldKey
      * @param array  $fieldValue
+     * @param bool  $noNeedToCheck
      *
      * @return array
      */
-    protected function buildField($fieldKey, $fieldValue)
+    protected function buildField($fieldKey, $fieldValue, $noNeedToCheck=false)
     {
-        $refToType = &$this->alambicTypes[$fieldValue['type']];
-        $baseTypeResult = function() use (&$refToType){
-            return $refToType;
-        };
+        if (!$noNeedToCheck&&!isset($this->alambicTypes[$fieldValue['type']]) && isset($this->alambicTypeDefs[$fieldValue['type']])) {
+            $this->loadAlambicType($fieldValue['type'], $this->alambicTypeDefs[$fieldValue['type']]);
+        }
+        $baseTypeResult = $this->alambicTypes[$fieldValue['type']];
 
         if (isset($fieldValue['multivalued']) && $fieldValue['multivalued']) {
             $baseTypeResult = Type::listOf($baseTypeResult);
@@ -516,7 +520,7 @@ class Alambic
         if (!empty($fieldValue['args']) && is_array($fieldValue['args'])) {
             $fieldResult['args'] = [];
             foreach ($fieldValue['args'] as $eargFieldKey => $eargFieldValue) {
-                $fieldResult['args'][$eargFieldKey] = $this->buildField($eargFieldKey, $eargFieldValue);
+                $fieldResult['args'][$eargFieldKey] = $this->buildField($eargFieldKey, $eargFieldValue,$noNeedToCheck);
             }
         }
         if (isset($this->alambicTypeDefs[$fieldValue['type']], $this->alambicTypeDefs[$fieldValue['type']]['connector'])) {
@@ -639,7 +643,10 @@ class Alambic
             'fields' => $this->alambicMutationFields,
         ]);
 
-        $this->schema = new Schema($queryType, $mutationType);
+        $this->schema = new Schema([
+            'query' => $queryType,
+            'mutation' => $mutationType
+        ]);
     }
 
     /**
