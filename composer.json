@@ -9,7 +9,7 @@
 	}],
     "require": {
         "php": ">=5.5.0",
-        "webonyx/graphql-php": "v0.6.2",
+        "webonyx/graphql-php": "v0.8.0",
         "league/pipeline":"0.2.2"
     },
     "autoload": {
