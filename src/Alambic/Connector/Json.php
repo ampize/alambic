@@ -23,10 +23,11 @@ class Json
         }
         $filePath=!empty($configs["fullPath"]) ? $configs["fullPath"] : $baseConfig["basePath"].$configs["fileName"];
         if (!is_file($filePath)) {
-            throw new ConnectorInternal('File not found');
+           $jsonArray=[];
+        } else {
+            $tempJson = file_get_contents($filePath);
+            $jsonArray=json_decode($tempJson,true);
         }
-        $tempJson = file_get_contents($filePath);
-        $jsonArray=json_decode($tempJson,true);
         return $payload["isMutation"] ? $this->execute($payload,$jsonArray,$filePath) : $this->resolve($payload,$jsonArray);
 
     }
