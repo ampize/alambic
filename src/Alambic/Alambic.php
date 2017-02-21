@@ -136,6 +136,13 @@ class Alambic
             if (!empty($config['alambicTypeDefs'])) {
                 $this->alambicTypeDefs = $config['alambicTypeDefs'];
             }
+            if (!empty($config['alambicTypes'])) {
+                $this->alambicTypes=array_merge($this->alambicTypes,$config['alambicTypes']);
+            }
+            if (!empty($config['inputAlambicTypes'])) {
+                $this->inputAlambicTypes=array_merge($this->inputAlambicTypes,$config['inputAlambicTypes']);
+            }
+
         }
         $this->initSchema($debug);
     }
