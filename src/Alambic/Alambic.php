@@ -92,6 +92,13 @@ class Alambic
     protected $optionArgs = ['start', 'limit', 'orderBy', 'orderByDirection'];
 
     /**
+     * Scalar types to be automatically included in endpoint args.
+     *
+     * @var string[]
+     */
+    protected $autoArgScalars = ["String","Int","ID","Float","Boolean"];
+
+    /**
      * GraphQL Schema.
      *
      * @var Schema
@@ -141,6 +148,9 @@ class Alambic
             }
             if (!empty($config['inputAlambicTypes'])) {
                 $this->inputAlambicTypes=array_merge($this->inputAlambicTypes,$config['inputAlambicTypes']);
+            }
+            if (!empty($config['autoArgScalars'])) {
+                $this->autoArgScalars=array_merge($this->autoArgScalars,$config['autoArgScalars']);
             }
 
         }
@@ -478,7 +488,7 @@ class Alambic
     {
         $endpointArgs=[];
         foreach($typeArgs as $argKey=>$argValue){
-            if(!$isMutation&&!in_array($argValue["type"],["String","Int","ID","Float","Boolean"])&&(empty($this->alambicTypeDefs[$argValue["type"]]["modelType"])||$this->alambicTypeDefs[$argValue["type"]]["modelType"]!="Enum")){
+            if(!$isMutation&&!in_array($argValue["type"],$this->autoArgScalars)&&(empty($this->alambicTypeDefs[$argValue["type"]]["modelType"])||$this->alambicTypeDefs[$argValue["type"]]["modelType"]!="Enum")){
                 continue;
             }
             if(!empty($this->alambicTypeDefs[$argValue["type"]]["modelType"])&&$this->alambicTypeDefs[$argValue["type"]]["modelType"]=="Union"){
