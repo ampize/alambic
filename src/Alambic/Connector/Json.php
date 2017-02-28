@@ -40,11 +40,11 @@ class Json
         $limit = !empty($payload['pipelineParams']['limit']) ? $payload['pipelineParams']['limit'] : count($jsonArray);
         $sort=null;
         if (!empty($payload['pipelineParams']['orderBy'])) {
-            $direction = !empty($payload['pipelineParams']['orderByDirection']) && ($payload['pipelineParams']['orderByDirection'] == 'desc') ? -1 : 1;
+            $direction = !empty($payload['pipelineParams']['orderByDirection']) && ($payload['pipelineParams']['orderByDirection'] == 'DESC') ? -1 : 1;
             $sort=$payload['pipelineParams']['orderBy'];
         }
         if($sort){
-            usort($array, $this->build_sorter($sort,$direction));
+            usort($jsonArray, $this->build_sorter($sort,$direction));
         }
         $indexLimit=$start+$limit-1;
         $index=0;
