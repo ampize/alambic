@@ -97,6 +97,7 @@ class Json
 
                     } elseif ($methodName == "delete") {
                         unset($jsonArray[$recordKey]);
+                        $result=$args;
                     }
                     $recordFound = true;
                 }
