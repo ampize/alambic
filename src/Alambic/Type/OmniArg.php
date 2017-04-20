@@ -19,13 +19,7 @@ class OmniArg  extends ScalarType
 
     public function parseValue($value)
     {
-        if ($value === true) {
-            return 'true';
-        }
-        if ($value === false) {
-            return 'false';
-        }
-        return (string) $value;
+        return $value;
     }
 
     public function parseLiteral($ast)
