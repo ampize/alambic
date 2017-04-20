@@ -31,7 +31,7 @@ class OmniArg  extends ScalarType
         } elseif ($ast instanceof BooleanValueNode){
             return (bool) $ast->value;
         } elseif ($ast instanceof StringValueNode){
-            return (bool) $ast->value;
+            return $ast->value;
         }
         return null;
     }

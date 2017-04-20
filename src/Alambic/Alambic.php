@@ -2,6 +2,7 @@
 
 namespace Alambic;
 
+use Alambic\Type\OmniArg;
 use GraphQL\GraphQL;
 use Exception;
 use GraphQL\Schema;
@@ -43,7 +44,7 @@ class Alambic
     /**
      * Input Alambic types.
      *
-     * @var ObjectType[]
+     * @var InputObjectType[]
      */
     protected $inputAlambicTypes = [];
 
@@ -89,7 +90,7 @@ class Alambic
      *
      * @var string[]
      */
-    protected $optionArgs = ['start', 'limit', 'orderBy', 'orderByDirection'];
+    protected $optionArgs = ['start', 'limit', 'orderBy', 'orderByDirection', 'filters'];
 
     /**
      * Scalar types to be automatically included in endpoint args.
@@ -113,6 +114,13 @@ class Alambic
     protected $mainRequestString = "";
 
     /**
+     * Input type for filters
+     *
+     * @var InputObjectType
+     */
+    protected $inputFiltersType = null;
+
+    /**
      * Error messages for JSON decoding.
      *
      * @var array
@@ -134,6 +142,7 @@ class Alambic
     public function __construct($config,$debug=false)
     {
         $this->initAlambicBaseTypes();
+        $this->initInputFiltersType();
         if (is_string($config) && is_dir($config)) {
             $this->loadConfigFromFiles($config);
         } else {
@@ -157,6 +166,87 @@ class Alambic
         $this->initSchema($debug);
     }
 
+    /**
+     * Init input type for filters.
+     *
+     */
+    protected function initInputFiltersType(){
+        $omniArg=new OmniArg();
+        $scalarFilter = new InputObjectType([
+            'name' => 'AlambicScalarFilter',
+            'fields' => [
+                'field' => [
+                    'type' => Type::nonNull(Type::string()),
+                ],
+                'operator' => [
+                    'type' => Type::nonNull(Type::string()),
+                ],
+                'value'=>[
+                    'type'=>Type::nonNull($omniArg)
+                ]
+            ]
+        ]);
+        $betweenFilter = new InputObjectType([
+            'name' => 'AlambicBetweenFilter',
+            'fields' => [
+                'field' => [
+                    'type' => Type::nonNull(Type::string()),
+                ],
+                'value1'=>[
+                    'type'=>Type::nonNull($omniArg)
+                ],
+                'value2'=>[
+                    'type'=>Type::nonNull($omniArg)
+                ]
+            ]
+        ]);
+        $assertionFilter = new InputObjectType([
+            'name' => 'AlambicAssertionFilter',
+            'fields' => [
+                'field' => [
+                    'type' => Type::nonNull(Type::string()),
+                ],
+                'operator' => [
+                    'type' => Type::nonNull(Type::string()),
+                ],
+            ]
+        ]);
+        $arrayFilter = new InputObjectType([
+            'name' => 'AlambicArrayFilter',
+            'fields' => [
+                'field' => [
+                    'type' => Type::nonNull(Type::string()),
+                ],
+                'operator' => [
+                    'type' => Type::nonNull(Type::string()),
+                ],
+                'value'=>[
+                    'type'=>Type::nonNull(Type::listOf($omniArg))
+                ]
+            ]
+        ]);
+        $this->inputFiltersType=new InputObjectType([
+            'name' => 'AlambicFilters',
+            'fields' => [
+                'operator' => [
+                    'type' => Type::string(),
+                ],
+                'scalarFilters'=>[
+                    'type'=>Type::listOf($scalarFilter)
+                ],
+                'arrayFilters'=>[
+                    'type'=>Type::listOf($arrayFilter)
+                ],
+                'betweenFilters'=>[
+                    'type'=>Type::listOf($betweenFilter)
+                ],
+                'assertionFilters'=>[
+                    'type'=>Type::listOf($assertionFilter)
+                ]
+            ]
+        ]);
+
+    }
     /**
      * Set shared pipeline context.
      *
@@ -630,6 +720,9 @@ class Alambic
         $args['orderByDirection'] = [
             'type' => Type::string(),
         ];
+        $args['filters'] = [
+            'type' => $this->inputFiltersType,
+        ];
     }
 
     /**
@@ -772,7 +865,6 @@ class Alambic
             }
             $this->pipelines[$pipeLineKey] = $pipelineBuilder->build();
         }
-
         return $this->pipelines[$pipeLineKey]->process($payload)['response'];
     }
 
