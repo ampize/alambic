@@ -287,10 +287,10 @@ class Alambic
                                 ]),
                                 "defaultValue"=>"between"
                             ],
-                            'value1'=>[
+                            'min'=>[
                                 'type'=>Type::nonNull($omniArg)
                             ],
-                            'value2'=>[
+                            'max'=>[
                                 'type'=>Type::nonNull($omniArg)
                             ]
                         ]
