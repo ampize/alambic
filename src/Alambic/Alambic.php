@@ -231,7 +231,8 @@ class Alambic
                                 "defaultValue"=>"eq"
                             ],
                             'value'=>[
-                                'type'=>$omniArg
+                                'type'=>$omniArg,
+                                "defaultValue"=>null
                             ]
                         ]
                     ]))
