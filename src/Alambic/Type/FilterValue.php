@@ -31,7 +31,18 @@ class FilterValue  extends ScalarType
         } elseif ($ast instanceof BooleanValueNode){
             return (bool) $ast->value;
         } elseif ($ast instanceof StringValueNode){
-            return $ast->value;
+            $value=$ast->value;
+            if(strpos($value,'NOW')!==false){
+                $timestamp=time();
+                preg_match('#\((.*?)\)#', $value, $match);
+                if(isset($match[1])){
+                    $incr=(int) $match[1];
+                    $timestamp=$timestamp+86400*$incr;
+                }
+                return $timestamp;
+            } else {
+                return $value;
+            }
         }
         return null;
     }
