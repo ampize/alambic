@@ -18,6 +18,7 @@ abstract class AbstractConnector
     protected $start = 0;
     protected $limit = 10;
     protected $orderBy = null;
+    protected $filters = null;
     protected $orderByDirection = 'DESC';
     protected $argsDefinition=[];
     protected $requiredConfig = [];
@@ -36,6 +37,7 @@ abstract class AbstractConnector
         $this->start =!empty($payload['pipelineParams']['start']) ? $payload['pipelineParams']['start'] : 0;
         $this->limit =!empty($payload['pipelineParams']['limit']) ? $payload['pipelineParams']['limit'] : 10;
         $this->orderBy =!empty($payload['pipelineParams']['orderBy']) ? $payload['pipelineParams']['orderBy'] : null;
+        $this->filters =!empty($payload['pipelineParams']['filters']) ? $payload['pipelineParams']['filters'] : null;
         $this->orderByDirection =!empty($payload['pipelineParams']['orderByDirection']) ? $payload['pipelineParams']['orderByDirection'] : 'DESC';
         $this->argsDefinition =!empty($payload['pipelineParams']['$argsDefinition']) ? $payload['pipelineParams']['$argsDefinition'] : [];
     }
