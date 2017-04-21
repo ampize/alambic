@@ -7,10 +7,10 @@ use GraphQL\Language\AST\StringValueNode;
 use GraphQL\Language\AST\IntValueNode;
 use GraphQL\Type\Definition\ScalarType;
 
-class OmniArg  extends ScalarType
+class FilterValue  extends ScalarType
 {
 
-    public $name = 'OmniArg';
+    public $name = 'AlambicFilterValue';
 
     public function serialize($value)
     {

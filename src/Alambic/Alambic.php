@@ -2,7 +2,7 @@
 
 namespace Alambic;
 
-use Alambic\Type\OmniArg;
+use Alambic\Type\FilterValue;
 use GraphQL\GraphQL;
 use Exception;
 use GraphQL\Schema;
@@ -171,78 +171,131 @@ class Alambic
      *
      */
     protected function initInputFiltersType(){
-        $omniArg=new OmniArg();
-        $scalarFilter = new InputObjectType([
-            'name' => 'AlambicScalarFilter',
-            'fields' => [
-                'field' => [
-                    'type' => Type::nonNull(Type::string()),
-                ],
-                'operator' => [
-                    'type' => Type::nonNull(Type::string()),
-                ],
-                'value'=>[
-                    'type'=>Type::nonNull($omniArg)
-                ]
-            ]
-        ]);
-        $betweenFilter = new InputObjectType([
-            'name' => 'AlambicBetweenFilter',
-            'fields' => [
-                'field' => [
-                    'type' => Type::nonNull(Type::string()),
-                ],
-                'value1'=>[
-                    'type'=>Type::nonNull($omniArg)
-                ],
-                'value2'=>[
-                    'type'=>Type::nonNull($omniArg)
-                ]
-            ]
-        ]);
-        $assertionFilter = new InputObjectType([
-            'name' => 'AlambicAssertionFilter',
-            'fields' => [
-                'field' => [
-                    'type' => Type::nonNull(Type::string()),
-                ],
-                'operator' => [
-                    'type' => Type::nonNull(Type::string()),
-                ],
-            ]
-        ]);
-        $arrayFilter = new InputObjectType([
-            'name' => 'AlambicArrayFilter',
-            'fields' => [
-                'field' => [
-                    'type' => Type::nonNull(Type::string()),
-                ],
-                'operator' => [
-                    'type' => Type::nonNull(Type::string()),
-                ],
-                'value'=>[
-                    'type'=>Type::nonNull(Type::listOf($omniArg))
-                ]
-            ]
-        ]);
+        $omniArg=new FilterValue();
         $this->inputFiltersType=new InputObjectType([
             'name' => 'AlambicFilters',
             'fields' => [
                 'operator' => [
-                    'type' => Type::string(),
+                    'type' => new EnumType([
+                        'name' => 'AlambicFiltersOperator',
+                        'values' => [
+                            'and' => [
+                                'value' => 'and',
+                            ],
+                            'or' => [
+                                'value' => 'or',
+                            ],
+
+                        ]
+                    ]),
+                    "defaultValue"=>"and"
                 ],
                 'scalarFilters'=>[
-                    'type'=>Type::listOf($scalarFilter)
+                    'type'=>Type::listOf(new InputObjectType([
+                        'name' => 'AlambicScalarFilter',
+                        'fields' => [
+                            'field' => [
+                                'type' => Type::nonNull(Type::string()),
+                            ],
+                            'operator' => [
+                                'type' => new EnumType([
+                                    'name' => 'AlambicScalarOperator',
+                                    'values' => [
+                                        'eq' => [
+                                            'value' => 'eq',
+                                        ],
+                                        'ne' => [
+                                            'value' => 'ne',
+                                        ],
+                                        'lt' => [
+                                            'value' => 'lt',
+                                        ],
+                                        'lte' => [
+                                            'value' => 'lte',
+                                        ],
+                                        'gt' => [
+                                            'value' => 'gt',
+                                        ],
+                                        'gte' => [
+                                            'value' => 'gte',
+                                        ],
+                                        'like' => [
+                                            'value' => 'like',
+                                        ],
+                                        'notLike' => [
+                                            'value' => 'notLike',
+                                        ],
+
+                                    ]
+                                ]),
+                                "defaultValue"=>"eq"
+                            ],
+                            'value'=>[
+                                'type'=>$omniArg
+                            ]
+                        ]
+                    ]))
                 ],
                 'arrayFilters'=>[
-                    'type'=>Type::listOf($arrayFilter)
+                    'type'=>Type::listOf(new InputObjectType([
+                        'name' => 'AlambicArrayFilter',
+                        'fields' => [
+                            'field' => [
+                                'type' => Type::nonNull(Type::string()),
+                            ],
+                            'operator' => [
+                                'type' => new EnumType([
+                                    'name' => 'AlambicArrayOperator',
+                                    'values' => [
+                                        'in' => [
+                                            'value' => 'in',
+                                        ],
+                                        'notIn' => [
+                                            'value' => 'notIn',
+                                        ],
+
+                                    ]
+                                ]),
+                                "defaultValue"=>"in"
+                            ],
+                            'value'=>[
+                                'type'=>Type::nonNull(Type::listOf($omniArg))
+                            ]
+                        ]
+                    ]))
                 ],
                 'betweenFilters'=>[
-                    'type'=>Type::listOf($betweenFilter)
+                    'type'=>Type::listOf(new InputObjectType([
+                        'name' => 'AlambicBetweenFilter',
+                        'fields' => [
+                            'field' => [
+                                'type' => Type::nonNull(Type::string()),
+                            ],
+                            'operator' => [
+                                'type' => new EnumType([
+                                    'name' => 'AlambicBetweenOperator',
+                                    'values' => [
+                                        'between' => [
+                                            'value' => 'between',
+                                        ],
+                                        'notBetween' => [
+                                            'value' => 'notBetween',
+                                        ],
+
+                                    ]
+                                ]),
+                                "defaultValue"=>"between"
+                            ],
+                            'value1'=>[
+                                'type'=>Type::nonNull($omniArg)
+                            ],
+                            'value2'=>[
+                                'type'=>Type::nonNull($omniArg)
+                            ]
+                        ]
+                    ]))
                 ],
-                'assertionFilters'=>[
-                    'type'=>Type::listOf($assertionFilter)
-                ]
+
             ]
         ]);
 
