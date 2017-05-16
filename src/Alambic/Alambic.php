@@ -990,4 +990,15 @@ class Alambic
         }
         return $this->isValidValue($value,$this->inputAlambicTypes[$typeName]);
     }
+
+    /**
+     * Returns type definition
+     *
+     * @param string $typeName
+     *
+     * @return array
+     */
+    public function getTypeDefinition($typeName){
+        return isset($this->alambicTypeDefs[$typeName]) ? $this->alambicTypeDefs[$typeName] :null;
+    }
 }
