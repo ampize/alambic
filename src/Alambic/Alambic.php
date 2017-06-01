@@ -840,7 +840,45 @@ class Alambic
         if ($multivalued && !empty($payload['args'])) {
             foreach ($payload['args'] as $argKey => $argValue) {
                 if (in_array($argKey, $this->optionArgs)) {
-                    $payload['pipelineParams'][$argKey] = $argValue;
+                    if($argKey=="filters"){
+                        if(!empty($argValue["scalarFilters"])){
+                            foreach($argValue["scalarFilters"] as $fKey=>$fValue){
+                                if(!empty($fValue["value"])&&strpos($fValue["value"],'___')!==false){
+                                    unset($argValue["scalarFilters"][$fKey]);
+                                }
+                            }
+                            if(count($argValue["scalarFilters"])==0){
+                                unset($argValue["scalarFilters"]);
+                            }
+                        }
+                        if(!empty($argValue["betweenFilters"])){
+                            foreach($argValue["betweenFilters"] as $fKey=>$fValue){
+                                if(!empty($fValue["min"])&&strpos($fValue["min"],'___')!==false){
+                                    unset($argValue["betweenFilters"][$fKey]);
+                                } elseif (!empty($fValue["max"])&&strpos($fValue["max"],'___')!==false){
+                                    unset($argValue["betweenFilters"][$fKey]);
+                                }
+                            }
+                            if(count($argValue["betweenFilters"])==0){
+                                unset($argValue["betweenFilters"]);
+                            }
+                        }
+                        if(!empty($argValue["arrayFilters"])){
+                            foreach($argValue["arrayFilters"] as $fKey=>$fValue){
+                                if(!empty($fValue["value"])&&strpos(implode(' ',$fValue["value"]),'___')!==false){
+                                    unset($argValue["arrayFilters"][$fKey]);
+                                }
+                            }
+                            if(count($argValue["arrayFilters"])==0){
+                                unset($argValue["arrayFilters"]);
+                            }
+                        }
+                        if(!empty($argValue["scalarFilters"])||!empty($argValue["betweenFilters"])||!empty($argValue["arrayFilters"])){
+                            $payload['pipelineParams'][$argKey] = $argValue;
+                        }
+                    } else {
+                        $payload['pipelineParams'][$argKey] = $argValue;
+                    }
                     unset($payload['args'][$argKey]);
                 }
             }
