@@ -90,7 +90,7 @@ class Alambic
      *
      * @var string[]
      */
-    protected $optionArgs = ['start', 'limit', 'orderBy', 'orderByDirection', 'filters'];
+    protected $optionArgs = ['start', 'limit', 'orderBy', 'orderByDirection', 'filters','groupBy'];
 
     /**
      * Scalar types to be automatically included in endpoint args.
@@ -776,6 +776,9 @@ class Alambic
         ];
         $args['filters'] = [
             'type' => $this->inputFiltersType,
+        ];
+        $args['groupBy'] = [
+            'type' =>Type::listOf(Type::string()),
         ];
     }
 
