@@ -19,6 +19,7 @@ abstract class AbstractConnector
     protected $limit = 10;
     protected $orderBy = null;
     protected $groupBy = null;
+    protected $methodName = null;
     protected $filters = null;
     protected $orderByDirection = 'DESC';
     protected $argsDefinition=[];
@@ -34,6 +35,7 @@ abstract class AbstractConnector
         $baseConfig=isset($payload["connectorBaseConfig"]) ? $payload["connectorBaseConfig"] : [];
         $this->config = array_merge($baseConfig, $configs);
         $this->args=isset($this->payload["args"]) ? $payload["args"] : [];
+        $this->methodName = isset($this->payload['methodName']) ? $this->payload['methodName'] : null;
         $this->multivalued=isset($payload["multivalued"]) ? $payload["multivalued"] : false;
         $this->start =!empty($payload['pipelineParams']['start']) ? $payload['pipelineParams']['start'] : 0;
         $this->limit =!empty($payload['pipelineParams']['limit']) ? $payload['pipelineParams']['limit'] : 10;
