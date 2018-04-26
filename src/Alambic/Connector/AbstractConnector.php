@@ -43,7 +43,7 @@ abstract class AbstractConnector
         $this->groupBy =!empty($payload['pipelineParams']['groupBy']) ? $payload['pipelineParams']['groupBy'] : null;
         $this->filters =!empty($payload['pipelineParams']['filters']) ? $payload['pipelineParams']['filters'] : null;
         $this->orderByDirection =!empty($payload['pipelineParams']['orderByDirection']) ? $payload['pipelineParams']['orderByDirection'] : 'DESC';
-        $this->argsDefinition =!empty($payload['pipelineParams']['$argsDefinition']) ? $payload['pipelineParams']['$argsDefinition'] : [];
+        $this->argsDefinition =!empty($payload['pipelineParams']['argsDefinition']) ? $payload['pipelineParams']['argsDefinition'] : [];
     }
 
     protected function checkConfig() {
