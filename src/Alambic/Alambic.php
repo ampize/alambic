@@ -684,7 +684,7 @@ class Alambic
                 $fieldResult['args'][$eargFieldKey] = $this->buildField($eargFieldKey, $eargFieldValue,$noNeedToCheck);
             }
         }
-        if (isset($this->alambicTypeDefs[$fieldValue['type']], $this->alambicTypeDefs[$fieldValue['type']]['connector'])) {
+        if (empty($fieldValue["forceNested"])&&isset($this->alambicTypeDefs[$fieldValue['type']], $this->alambicTypeDefs[$fieldValue['type']]['connector'])) {
             $connectorConfig = !empty($this->alambicTypeDefs[$fieldValue['type']]['connector']['configs']) ? $this->alambicTypeDefs[$fieldValue['type']]['connector']['configs'] : [];;
             $connectorType = $this->alambicTypeDefs[$fieldValue['type']]['connector']['type'];
             $multivalued = isset($fieldValue['multivalued']) && $fieldValue['multivalued'];
