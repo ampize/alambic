@@ -1042,4 +1042,13 @@ class Alambic
     public function getTypeDefinition($typeName){
         return isset($this->alambicTypeDefs[$typeName]) ? $this->alambicTypeDefs[$typeName] :null;
     }
+    
+    /**
+     * Returns all type definitions
+     *
+     * @return array
+     */
+    public function getAllTypeDefs(){
+        return $this->alambicTypeDefs;
+    }
 }
