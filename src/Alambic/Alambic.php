@@ -17,7 +17,6 @@ use GraphQL\Utils;
 use GraphQL\Type\Definition\ListOfType;
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ScalarType;
-use GraphQL\Error\Debug;
 
 /**
  * Main Alambic class.
@@ -333,19 +332,15 @@ class Alambic
      */
     public function execute($requestString = null, $variableValues = null, $operationName = null)
     {
-        $debug=null;
-        if(!empty(getenv("APP_DEBUG"))&&getenv("APP_DEBUG")=="true"){
-            $debug = Debug::INCLUDE_DEBUG_MESSAGE | Debug::INCLUDE_TRACE;
-        }
         $this->mainRequestString=$requestString;
         try {
-            $result = GraphQL::executeQuery(
+            $result = GraphQL::execute(
                 $this->schema,
                 $requestString,
                 null,
                 $variableValues,
                 $operationName
-            )->toArray($debug);
+            );
         } catch (Exception $exception) {
             $result = [
                 'errors' => [
@@ -689,7 +684,7 @@ class Alambic
                 $fieldResult['args'][$eargFieldKey] = $this->buildField($eargFieldKey, $eargFieldValue,$noNeedToCheck);
             }
         }
-        if (empty($fieldValue["forceNested"])&&isset($this->alambicTypeDefs[$fieldValue['type']], $this->alambicTypeDefs[$fieldValue['type']]['connector'])) {
+        if (isset($this->alambicTypeDefs[$fieldValue['type']], $this->alambicTypeDefs[$fieldValue['type']]['connector'])) {
             $connectorConfig = !empty($this->alambicTypeDefs[$fieldValue['type']]['connector']['configs']) ? $this->alambicTypeDefs[$fieldValue['type']]['connector']['configs'] : [];;
             $connectorType = $this->alambicTypeDefs[$fieldValue['type']]['connector']['type'];
             $multivalued = isset($fieldValue['multivalued']) && $fieldValue['multivalued'];
@@ -1046,14 +1041,5 @@ class Alambic
      */
     public function getTypeDefinition($typeName){
         return isset($this->alambicTypeDefs[$typeName]) ? $this->alambicTypeDefs[$typeName] :null;
-    }
-    
-    /**
-     * Returns all type definitions
-     *
-     * @return array
-     */
-    public function getAllTypeDefs(){
-        return $this->alambicTypeDefs;
     }
 }
