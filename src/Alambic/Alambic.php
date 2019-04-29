@@ -17,6 +17,7 @@ use GraphQL\Utils;
 use GraphQL\Type\Definition\ListOfType;
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ScalarType;
+use GraphQL\Error\Debug;
 
 /**
  * Main Alambic class.
@@ -332,15 +333,19 @@ class Alambic
      */
     public function execute($requestString = null, $variableValues = null, $operationName = null)
     {
+        $debug=null;
+        if(!empty(getenv("APP_DEBUG"))&&getenv("APP_DEBUG")=="true"){
+            $debug = Debug::INCLUDE_DEBUG_MESSAGE | Debug::INCLUDE_TRACE;
+        }
         $this->mainRequestString=$requestString;
         try {
-            $result = GraphQL::execute(
+            $result = GraphQL::executeQuery(
                 $this->schema,
                 $requestString,
                 null,
                 $variableValues,
                 $operationName
-            );
+            )->toArray($debug);
         } catch (Exception $exception) {
             $result = [
                 'errors' => [
