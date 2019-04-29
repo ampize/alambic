@@ -343,6 +343,7 @@ class Alambic
                 $this->schema,
                 $requestString,
                 null,
+                null,
                 $variableValues,
                 $operationName
             )->toArray($debug);
