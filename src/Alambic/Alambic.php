@@ -610,13 +610,16 @@ class Alambic
         } else {
             $typeArray = [
                 'name' => "Input_".$type['name'],
-                'fields' => [],
+                'fields'  => function() use ($type) {
+                    $fields = [];
+                    foreach ($type['fields'] as $fieldKey => $fieldValue) {
+                        $fields[$fieldKey] = $this->buildInputField($fieldKey, $fieldValue);
+                    }
+                    return $fields;
+                }
             ];
             if (!empty($type['description'])) {
                 $typeArray['description'] = $type['description'];
-            }
-            foreach ($type['fields'] as $fieldKey => $fieldValue) {
-                $typeArray['fields'][$fieldKey] = $this->buildInputField($fieldKey, $fieldValue);
             }
             $this->inputAlambicTypes[$typeName] = new InputObjectType($typeArray);
 
