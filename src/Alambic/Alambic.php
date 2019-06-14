@@ -334,7 +334,7 @@ class Alambic
     public function execute($requestString = null, $variableValues = null, $operationName = null)
     {
         $debug=null;
-        if(!empty(getenv("APP_DEBUG"))&&getenv("APP_DEBUG")=="true"){
+        if(!empty(getenv("APP_DEBUG"))&&getenv("APP_DEBUG")!=="false"){
             $debug = Debug::INCLUDE_DEBUG_MESSAGE | Debug::INCLUDE_TRACE;
         }
         $this->mainRequestString=$requestString;
